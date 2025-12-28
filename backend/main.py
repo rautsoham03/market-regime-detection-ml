@@ -13,11 +13,17 @@ app = FastAPI(title="Regime-Aware Investor Guidance API")
 # Load data once at startup
 # ----------------------------------
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_PATH = BASE_DIR / "data" / "nifty50_final_with_labels.csv"
+
 df = pd.read_csv(
-    r"C:\Users\sanke\OneDrive\Desktop\PythonProject\market-regime-detection-ml\backend\data\nifty50_final_with_labels.csv",
+    DATA_PATH,
     index_col=0,
     parse_dates=True
 )
+
 
 df.sort_index(inplace=True)
 
