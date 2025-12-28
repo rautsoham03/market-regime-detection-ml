@@ -12,28 +12,15 @@ import { API_BASE } from "../config";
    Types
 -------------------------------- */
 
-type RawRegimePoint = {
-  date: string;
-  regime_label: string;
-};
-
 type RegimePoint = {
   date: string;
-  regime: number;
+  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
 };
 
 /* -------------------------------
    Helpers
 -------------------------------- */
 
-// Convert regime label → numeric code
-const mapRegimeToNumber = (label: string): number => {
-  if (label.includes("Stable")) return 0;
-  if (label.includes("Uncertain")) return 1;
-  return 2; // Crisis
-};
-
-// Regime → Color mapping
 const regimeColor = (r: number) => {
   if (r === 0) return "#2e7d32"; // Stable
   if (r === 1) return "#f9a825"; // Uncertain
@@ -59,12 +46,8 @@ export default function RegimeTimeline() {
         }
         return res.json();
       })
-      .then((raw: RawRegimePoint[]) => {
-        const transformed: RegimePoint[] = raw.map((d) => ({
-          date: d.date,
-          regime: mapRegimeToNumber(d.regime_label),
-        }));
-        setData(transformed);
+      .then((result: RegimePoint[]) => {
+        setData(result);
         setError(null);
       })
       .catch((err) => {
@@ -74,20 +57,12 @@ export default function RegimeTimeline() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* -------------------------------
-     Render
-  -------------------------------- */
-
   if (loading) {
     return <p style={{ marginTop: 20 }}>Loading regime timeline…</p>;
   }
 
   if (error) {
-    return (
-      <p style={{ marginTop: 20, color: "red" }}>
-        {error}
-      </p>
-    );
+    return <p style={{ marginTop: 20, color: "red" }}>{error}</p>;
   }
 
   return (
