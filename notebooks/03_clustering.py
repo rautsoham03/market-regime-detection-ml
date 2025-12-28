@@ -6,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
+from pathlib import Path
+
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_PATH = BASE_DIR / "data" / "nifty50_features.csv"
