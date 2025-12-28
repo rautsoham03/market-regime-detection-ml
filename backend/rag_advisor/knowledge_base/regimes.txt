@@ -1,0 +1,11 @@
+Stable or Bull Market Regime:
+Characterized by low volatility and steady positive returns.
+Markets tend to reward risk-taking with limited drawdowns.
+
+Uncertain or Transition Regime:
+Characterized by rising volatility and mixed returns.
+Markets lack clear direction and risk of drawdowns increases.
+
+Crisis or High Volatility Regime:
+Characterized by extreme volatility and large drawdowns.
+These regimes are usually short-lived but account for most losses.
