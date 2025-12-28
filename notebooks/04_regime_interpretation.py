@@ -1,8 +1,15 @@
 import pandas as pd
 import numpy as np
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+DATA_PATH = BASE_DIR / "data" / "nifty50_with_regimes.csv"
+
+
 df = pd.read_csv(
-    r"C:\Users\sanke\OneDrive\Desktop\PythonProject\market-regime-detection-ml\data\nifty50_with_regimes.csv",
+    DATA_PATH,
     index_col=0,
     parse_dates=True
 )
