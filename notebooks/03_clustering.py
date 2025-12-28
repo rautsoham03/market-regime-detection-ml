@@ -6,8 +6,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
+BASE_DIR = Path(__file__).resolve().parent
+
+DATA_PATH = BASE_DIR / "data" / "nifty50_features.csv"
+
 features = pd.read_csv(
-    r"C:\Users\sanke\OneDrive\Desktop\PythonProject\market-regime-detection-ml\data\nifty50_features.csv",
+    DATA_PATH,
     index_col=0,
     parse_dates=True
 )
