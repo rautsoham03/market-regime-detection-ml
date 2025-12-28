@@ -1,9 +1,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-df = pd.read_csv(r"C:\Users\sanke\OneDrive\Desktop\PythonProject\market-regime-detection-ml\data\nifty50_raw.csv", index_col=0, parse_dates=True)
-df.head()
+BASE_DIR = Path(__file__).resolve().parent
+
+DATA_PATH = BASE_DIR / "data" / "nifty50_raw.csv"
+
+df = pd.read_csv(DATA_PATH, index_col=0, parse_dates=True)
+
 
 print(df.dtypes)
 
