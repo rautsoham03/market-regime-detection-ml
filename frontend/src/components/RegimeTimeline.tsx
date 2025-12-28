@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -5,24 +6,90 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { API_BASE } from "../config";
+
+/* -------------------------------
+   Types
+-------------------------------- */
+
+type RawRegimePoint = {
+  date: string;
+  regime_label: string;
+};
 
 type RegimePoint = {
   date: string;
   regime: number;
 };
 
-type Props = {
-  data: RegimePoint[];
+/* -------------------------------
+   Helpers
+-------------------------------- */
+
+// Convert regime label → numeric code
+const mapRegimeToNumber = (label: string): number => {
+  if (label.includes("Stable")) return 0;
+  if (label.includes("Uncertain")) return 1;
+  return 2; // Crisis
 };
 
-/* Regime → Color mapping */
+// Regime → Color mapping
 const regimeColor = (r: number) => {
   if (r === 0) return "#2e7d32"; // Stable
   if (r === 1) return "#f9a825"; // Uncertain
   return "#c62828"; // Crisis
 };
 
-export default function RegimeTimeline({ data }: Props) {
+/* -------------------------------
+   Component
+-------------------------------- */
+
+export default function RegimeTimeline() {
+  const [data, setData] = useState<RegimePoint[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+
+    fetch(`${API_BASE}/regime-timeline`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch regime timeline");
+        }
+        return res.json();
+      })
+      .then((raw: RawRegimePoint[]) => {
+        const transformed: RegimePoint[] = raw.map((d) => ({
+          date: d.date,
+          regime: mapRegimeToNumber(d.regime_label),
+        }));
+        setData(transformed);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Unable to load regime timeline");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  /* -------------------------------
+     Render
+  -------------------------------- */
+
+  if (loading) {
+    return <p style={{ marginTop: 20 }}>Loading regime timeline…</p>;
+  }
+
+  if (error) {
+    return (
+      <p style={{ marginTop: 20, color: "red" }}>
+        {error}
+      </p>
+    );
+  }
+
   return (
     <div style={{ marginTop: "30px" }}>
       <h3>📈 Market Regime Timeline</h3>
