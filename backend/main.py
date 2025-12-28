@@ -9,6 +9,17 @@ from rag_advisor.advisor import regime_investor_guidance_json
 
 app = FastAPI(title="Regime-Aware Investor Guidance API")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # safe for demo; restrict later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # ----------------------------------
 # Load data once at startup
 # ----------------------------------
