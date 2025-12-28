@@ -1,5 +1,6 @@
 import { useState } from "react";
 import html2pdf from "html2pdf.js";
+import { API_BASE } from "../config";
 
 /* -------------------------------
    Types
@@ -52,8 +53,8 @@ export default function InvestorGuidance() {
 
     setLoading(true);
     const response = await fetch(
-      `http://127.0.0.1:8000/investor-guidance?date=${selectedDate}`
-    );
+  `${API_BASE}/investor-guidance?date=${selectedDate}`
+);
     const result = await response.json();
     setData(result);
     setLoading(false);
