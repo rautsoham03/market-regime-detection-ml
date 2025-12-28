@@ -106,15 +106,25 @@ def regime_timeline():
     label_map = {
         "Stable": 0,
         "Uncertain": 1,
-        "Crisis": 2
+        "Crisis": 2,
     }
 
+    # Map regime labels
     timeline_df["regime"] = timeline_df["regime_label"].map(label_map)
 
-    # 🔴 FIX: remove NaN rows before JSON serialization
-    timeline_df = timeline_df.dropna(subset=["regime"])
+    # 🔴 CRITICAL: Drop ALL rows with ANY NaN
+    timeline_df = timeline_df.dropna(how="any")
 
+    # Convert safely
     timeline_df["regime"] = timeline_df["regime"].astype(int)
     timeline_df["date"] = timeline_df["date"].astype(str)
 
-    return timeline_df[["date", "regime"]].to_dict(orient="records")
+    # 🔴 FINAL SAFETY NET (guaranteed JSON-safe)
+    records = timeline_df[["date", "regime"]].to_dict(orient="records")
+
+    clean_records = []
+    for r in records:
+        if r["date"] and isinstance(r["regime"], int):
+            clean_records.append(r)
+
+    return clean_records
