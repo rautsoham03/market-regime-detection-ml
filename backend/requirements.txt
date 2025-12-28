@@ -1,16 +1,5 @@
-numpy
+fastapi
+uvicorn
 pandas
-matplotlib
-seaborn
+numpy
 scikit-learn
-yfinance
-streamlit
-plotly
-hf_xet
-sentence-transformers
-fastapi uvicorn 
-pandas 
-numpy 
-faiss-cpu sentence-transformers 
-langchain langchain-community 
-python-dotenv
