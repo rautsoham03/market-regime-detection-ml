@@ -14,7 +14,7 @@ import { API_BASE } from "../config";
 
 type RegimePoint = {
   date: string;
-  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
+  regime: number;
 };
 
 /* -------------------------------
@@ -33,21 +33,17 @@ const regimeColor = (r: number) => {
 
 export default function RegimeTimeline() {
   const [data, setData] = useState<RegimePoint[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-
     fetch(`${API_BASE}/regime-timeline`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch regime timeline");
-        }
+        if (!res.ok) throw new Error("API error");
         return res.json();
       })
-      .then((result: RegimePoint[]) => {
-        setData(result);
+      .then((rows: RegimePoint[]) => {
+        setData(rows);
         setError(null);
       })
       .catch((err) => {
@@ -57,13 +53,8 @@ export default function RegimeTimeline() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return <p style={{ marginTop: 20 }}>Loading regime timeline…</p>;
-  }
-
-  if (error) {
-    return <p style={{ marginTop: 20, color: "red" }}>{error}</p>;
-  }
+  if (loading) return <p>Loading regime timeline…</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div style={{ marginTop: "30px" }}>
@@ -77,7 +68,7 @@ export default function RegimeTimeline() {
           <Line
             type="stepAfter"
             dataKey="regime"
-            stroke="#333"
+            stroke="#aaa"
             strokeWidth={2}
             dot={({ cx, cy, payload }) => (
               <circle
