@@ -100,9 +100,9 @@ def regime_timeline():
         .rename(columns={"index": "date"})
         [["date", "regime_label"]]
         .tail(300)
+        .copy()
     )
 
-    # Convert labels → numeric codes
     label_map = {
         "Stable": 0,
         "Uncertain": 1,
@@ -110,6 +110,11 @@ def regime_timeline():
     }
 
     timeline_df["regime"] = timeline_df["regime_label"].map(label_map)
+
+    # 🔴 FIX: remove NaN rows before JSON serialization
+    timeline_df = timeline_df.dropna(subset=["regime"])
+
+    timeline_df["regime"] = timeline_df["regime"].astype(int)
     timeline_df["date"] = timeline_df["date"].astype(str)
 
     return timeline_df[["date", "regime"]].to_dict(orient="records")
