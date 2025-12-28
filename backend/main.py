@@ -84,17 +84,21 @@ def investor_guidance(
 
 @app.get("/regime-timeline")
 def regime_timeline():
-    """
-    Returns historical market regime timeline
-    """
-
     timeline_df = (
         df.reset_index()
-        [["Price", "regime_label"]]
-        .rename(columns={"Price": "date"})
+        .rename(columns={"index": "date"})
+        [["date", "regime_label"]]
         .tail(300)
     )
 
+    # Convert labels → numeric codes
+    label_map = {
+        "Stable": 0,
+        "Uncertain": 1,
+        "Crisis": 2
+    }
+
+    timeline_df["regime"] = timeline_df["regime_label"].map(label_map)
     timeline_df["date"] = timeline_df["date"].astype(str)
 
-    return timeline_df.to_dict(orient="records")
+    return timeline_df[["date", "regime"]].to_dict(orient="records")
