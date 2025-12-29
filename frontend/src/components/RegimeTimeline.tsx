@@ -34,6 +34,36 @@ const regimeColor = (r: number) => {
 };
 
 /* -------------------------------
+   Custom Tooltip (NO TS ERRORS)
+-------------------------------- */
+
+function RegimeTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null;
+
+  const point = payload[0].payload as RegimePoint;
+
+  return (
+    <div
+      style={{
+        background: "#fff",
+        padding: "10px 12px",
+        borderRadius: 6,
+        border: "1px solid #ddd",
+        fontSize: 13,
+      }}
+    >
+      <strong>{point.date}</strong>
+      <div style={{ marginTop: 4 }}>
+        Regime:{" "}
+        <span style={{ color: regimeColor(point.regime) }}>
+          {regimeLabel(point.regime)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------
    Component
 -------------------------------- */
 
@@ -59,34 +89,23 @@ export default function RegimeTimeline() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return <p style={{ marginTop: 20 }}>Loading market regime timeline…</p>;
-  }
-
-  if (error) {
-    return <p style={{ marginTop: 20, color: "red" }}>{error}</p>;
-  }
-
-  if (!data.length) {
-    return <p style={{ marginTop: 20 }}>No regime data available</p>;
-  }
+  if (loading) return <p>Loading market regime timeline…</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (!data.length) return <p>No regime data available</p>;
 
   return (
     <section style={card}>
-      <h3 style={{ marginBottom: 10 }}>📈 Market Regime Timeline</h3>
+      <h3 style={{ marginBottom: 12 }}>📈 Market Regime Timeline</h3>
 
-      <div style={{ width: "100%", height: 280 }}>
+      <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis dataKey="date" hide />
-            <Tooltip
-              formatter={(v: number) => regimeLabel(v)}
-              labelFormatter={(l) => `Date: ${l}`}
-            />
+            <Tooltip content={<RegimeTooltip />} />
             <Line
               type="stepAfter"
               dataKey="regime"
-              stroke="#444"
+              stroke="#555"
               strokeWidth={2}
               dot={({ cx, cy, payload }) => (
                 <circle
