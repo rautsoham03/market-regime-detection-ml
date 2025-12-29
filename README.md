@@ -91,11 +91,15 @@ npm run dev
 
 Frontend runs at: http://localhost:5173
 
+
+```
+
 🧠 Market Regimes Explained
 
 <img width="788" height="162" alt="image" src="https://github.com/user-attachments/assets/937c6f05-fd5c-4a29-bf37-5b82ce35120b" />
 
 
+```text
 📌 Usage Guide
 Dashboard: Select a date to see the historical market regime and vital signs (Volatility, Return).
 
@@ -117,4 +121,4 @@ Export: Click "Export Report (PDF)" to save the analysis.
 
 ⚠️ Disclaimer
 This project is for educational and analytical purposes only. It does not constitute financial advice.
-Always do your own research before investing!!!.
+Always do your own research before investing!!!.```
