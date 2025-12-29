@@ -1,12 +1,10 @@
 import { useState } from "react";
 import html2pdf from "html2pdf.js";
 import { API_BASE } from "../config";
-import RegimeTimeline from "./RegimeTimeline";
 
 /* -------------------------------
    Types
 -------------------------------- */
-
 type GuidanceResponse = {
   regime: string;
   start_date: string;
@@ -24,62 +22,52 @@ type GuidanceResponse = {
 };
 
 /* -------------------------------
-   Regime Theme Helper
+   Helpers
 -------------------------------- */
-
-const getRegimeTheme = (regime: string) => {
+const themeByRegime = (regime: string) => {
   if (regime.includes("Stable"))
-    return { bg: "#e8f5e9", border: "#2e7d32", emoji: "🟢" };
+    return { bg: "#e8f5e9", border: "#2ecc71", emoji: "🟢" };
   if (regime.includes("Uncertain"))
-    return { bg: "#fff8e1", border: "#f9a825", emoji: "🟡" };
-  if (regime.includes("Crisis"))
-    return { bg: "#fdecea", border: "#c62828", emoji: "🔴" };
-  return { bg: "#f5f5f5", border: "#999", emoji: "ℹ️" };
+    return { bg: "#fff8e1", border: "#f1c40f", emoji: "🟡" };
+  return { bg: "#fdecea", border: "#e74c3c", emoji: "🔴" };
 };
 
 /* -------------------------------
    Component
 -------------------------------- */
-
 export default function InvestorGuidance() {
   const [date, setDate] = useState("");
   const [data, setData] = useState<GuidanceResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchGuidance = async (selectedDate: string) => {
-    if (!selectedDate) return;
-
+  const fetchGuidance = async (d: string) => {
     setLoading(true);
-    const res = await fetch(
-      `${API_BASE}/investor-guidance?date=${selectedDate}`
-    );
-    const result = await res.json();
-    setData(result);
+    const res = await fetch(`${API_BASE}/investor-guidance?date=${d}`);
+    const json = await res.json();
+    setData(json);
     setLoading(false);
   };
 
   const exportPDF = () => {
-    const element = document.getElementById("guidance-card");
-    if (!element) return;
+    const el = document.getElementById("guidance-card");
+    if (!el) return;
 
     html2pdf()
       .set({
         margin: 0.5,
         filename: `Investor_Guidance_${date}.pdf`,
         html2canvas: { scale: 2 },
-        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
       })
-      .from(element)
+      .from(el)
       .save();
   };
 
   return (
-    <div style={pageStyle}>
-      <h2 style={{ marginBottom: 20 }}>📊 Investor Intelligence Dashboard</h2>
+    <section style={card}>
+      <h2>📊 Investor Intelligence Dashboard</h2>
 
-      {/* Date Picker */}
-      <div style={{ marginBottom: 15 }}>
-        <strong>Select Date:</strong>{" "}
+      <label>
+        <strong>Select Date:</strong>
         <input
           type="date"
           value={date}
@@ -87,29 +75,28 @@ export default function InvestorGuidance() {
             setDate(e.target.value);
             fetchGuidance(e.target.value);
           }}
+          style={{ marginLeft: 10 }}
         />
-      </div>
+      </label>
 
       {loading && <p>Analyzing market regime…</p>}
 
       {data && (() => {
-        const theme = getRegimeTheme(data.regime);
-
+        const theme = themeByRegime(data.regime);
         return (
           <>
-            <button onClick={exportPDF} style={exportBtnStyle}>
+            <button onClick={exportPDF} style={exportBtn}>
               📄 Export Investor Report (PDF)
             </button>
 
-            {/* Guidance Card */}
             <div
               id="guidance-card"
               style={{
+                marginTop: 20,
+                padding: 24,
                 background: theme.bg,
                 border: `2px solid ${theme.border}`,
-                borderRadius: 12,
-                padding: 24,
-                marginTop: 20,
+                borderRadius: 14,
               }}
             >
               <h3>
@@ -117,12 +104,11 @@ export default function InvestorGuidance() {
               </h3>
 
               <p>
-                <strong>Active Since:</strong> {data.start_date}
-                <br />
-                <strong>Duration:</strong> {data.duration_days} trading days
+                Active Since: <b>{data.start_date}</b> <br />
+                Duration: <b>{data.duration_days}</b> trading days
               </p>
 
-              <h4>📊 Market Metrics</h4>
+              <h4>📈 Market Metrics</h4>
               <ul>
                 <li>Average Return: {(data.metrics.average_return * 100).toFixed(2)}%</li>
                 <li>Volatility: {(data.metrics.volatility * 100).toFixed(2)}%</li>
@@ -139,7 +125,7 @@ export default function InvestorGuidance() {
               <ul>{data.actions.map((a, i) => <li key={i}>{a}</li>)}</ul>
 
               <h4>💼 Preferred Investment Avenues</h4>
-              <ul>{data.investment_avenues.map((i, idx) => <li key={idx}>{i}</li>)}</ul>
+              <ul>{data.investment_avenues.map((i, k) => <li key={k}>{i}</li>)}</ul>
 
               <h4>🛡 Risk Focus</h4>
               <p>{data.risk_focus}</p>
@@ -147,33 +133,26 @@ export default function InvestorGuidance() {
           </>
         );
       })()}
-
-      {/* Divider */}
-      <hr style={{ margin: "40px 0" }} />
-
-      {/* Timeline Section */}
-      <RegimeTimeline />
-    </div>
+    </section>
   );
 }
 
 /* -------------------------------
    Styles
 -------------------------------- */
-
-const pageStyle: React.CSSProperties = {
+const card: React.CSSProperties = {
+  background: "#fff",
   padding: "30px",
-  maxWidth: "100%",
-  margin: "0 auto",
-  background: "#fafafa",
-  color: "#111",
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
 };
 
-const exportBtnStyle: React.CSSProperties = {
-  padding: "8px 14px",
-  borderRadius: 6,
-  border: "none",
-  cursor: "pointer",
+const exportBtn: React.CSSProperties = {
+  marginTop: 15,
+  padding: "10px 16px",
   background: "#1976d2",
   color: "#fff",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
 };
