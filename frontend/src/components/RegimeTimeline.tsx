@@ -22,16 +22,18 @@ type RegimePoint = {
    Helpers
 -------------------------------- */
 
-const regimeLabel = (r: number) => {
-  if (r === 0) return "Stable";
-  if (r === 1) return "Uncertain";
-  return "Crisis";
+const regimeLabel = (value: unknown): string => {
+  const v = Number(value);
+  if (v === 0) return "Stable";
+  if (v === 1) return "Uncertain";
+  if (v === 2) return "Crisis";
+  return "";
 };
 
 const regimeColor = (r: number) => {
-  if (r === 0) return "#2e7d32"; // green
-  if (r === 1) return "#f9a825"; // amber
-  return "#c62828"; // red
+  if (r === 0) return "#2e7d32";
+  if (r === 1) return "#f9a825";
+  return "#c62828";
 };
 
 /* -------------------------------
@@ -46,7 +48,7 @@ export default function RegimeTimeline() {
   useEffect(() => {
     fetch(`${API_BASE}/regime-timeline`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch timeline");
+        if (!res.ok) throw new Error("API error");
         return res.json();
       })
       .then((rows: RegimePoint[]) => {
@@ -60,25 +62,8 @@ export default function RegimeTimeline() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* -------------------------------
-     Render states
-  -------------------------------- */
-
-  if (loading) {
-    return <p style={{ marginTop: 30 }}>Loading market regime timeline…</p>;
-  }
-
-  if (error) {
-    return (
-      <p style={{ marginTop: 30, color: "red" }}>
-        {error}
-      </p>
-    );
-  }
-
-  /* -------------------------------
-     Main Render
-  -------------------------------- */
+  if (loading) return <p style={{ marginTop: 30 }}>Loading regime timeline…</p>;
+  if (error) return <p style={{ marginTop: 30, color: "red" }}>{error}</p>;
 
   return (
     <div
@@ -88,27 +73,23 @@ export default function RegimeTimeline() {
         background: "#ffffff",
         borderRadius: 14,
         width: "100%",
-        boxSizing: "border-box",
       }}
     >
-      <h3 style={{ marginBottom: 16 }}>
-        📈 Market Regime Timeline
-      </h3>
+      <h3 style={{ marginBottom: 16 }}>📈 Market Regime Timeline</h3>
 
-      {/* Chart Container */}
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis dataKey="date" hide />
+
             <YAxis
-              type="number"
               domain={[0, 2]}
               ticks={[0, 1, 2]}
-              tickFormatter={(v) => regimeLabel(v)}
+              tickFormatter={(value) => regimeLabel(value)}
             />
 
             <Tooltip
-              formatter={(value: number) => regimeLabel(value)}
+              formatter={(value) => regimeLabel(value)}
               labelFormatter={(label) => `Date: ${label}`}
             />
 
@@ -131,17 +112,10 @@ export default function RegimeTimeline() {
         </ResponsiveContainer>
       </div>
 
-      {/* Legend */}
       <div style={{ fontSize: 14, marginTop: 14 }}>
-        <span style={{ color: "#2e7d32", marginRight: 12 }}>
-          🟢 Stable
-        </span>
-        <span style={{ color: "#f9a825", marginRight: 12 }}>
-          🟡 Uncertain
-        </span>
-        <span style={{ color: "#c62828" }}>
-          🔴 Crisis
-        </span>
+        <span style={{ color: "#2e7d32", marginRight: 12 }}>🟢 Stable</span>
+        <span style={{ color: "#f9a825", marginRight: 12 }}>🟡 Uncertain</span>
+        <span style={{ color: "#c62828" }}>🔴 Crisis</span>
       </div>
     </div>
   );
