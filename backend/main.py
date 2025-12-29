@@ -98,24 +98,11 @@ def regime_timeline():
     timeline_df = (
         df.reset_index()
         .rename(columns={"index": "date"})
-        [["date", "regime_label"]]
+        [["date", "close", "regime_label"]]
         .tail(300)
-        .dropna()
-    )
-
-    label_map = {
-        "Stable": 0,
-        "Uncertain": 1,
-        "Crisis": 2,
-    }
-
-    timeline_df["regime"] = (
-        timeline_df["regime_label"]
-        .map(label_map)
-        .fillna(1)
-        .astype(int)
     )
 
     timeline_df["date"] = timeline_df["date"].astype(str)
+    timeline_df["close"] = timeline_df["close"].astype(float)
 
-    return timeline_df[["date", "regime"]].to_dict(orient="records")
+    return timeline_df.to_dict(orient="records")
