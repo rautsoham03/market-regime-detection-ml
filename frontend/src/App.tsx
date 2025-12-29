@@ -3,51 +3,46 @@ import RegimeTimeline from "./components/RegimeTimeline";
 
 export default function App() {
   return (
-    <main style={pageStyle}>
-      <header style={headerStyle}>
-        <h1 style={{ marginBottom: 8 }}>Market Regime Analytics</h1>
-        <p style={{ color: "#555" }}>
-          Regime-aware market insights for long-term investors
-        </p>
+    <div style={page}>
+      <header style={hero}>
+        <h1>Market Regime Analytics</h1>
+        <p>Regime-aware market insights for long-term investors</p>
       </header>
 
-      <section style={containerStyle}>
+      <main style={container}>
         <InvestorGuidance />
         <RegimeTimeline />
-      </section>
+      </main>
 
-      <footer style={footerStyle}>
+      <footer style={footer}>
         © 2025 Market Regime Analytics
       </footer>
-    </main>
+    </div>
   );
 }
 
-/* -------------------------------
-   Styles
--------------------------------- */
+/* ---------------- Styles ---------------- */
 
-const pageStyle: React.CSSProperties = {
+const page: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#f4f6f8",
+  background: "#f5f7fa",
+  fontFamily: "Inter, system-ui, sans-serif",
 };
 
-const headerStyle: React.CSSProperties = {
-  padding: "40px 20px",
-  background: "#ffffff",
-  borderBottom: "1px solid #e5e5e5",
+const hero: React.CSSProperties = {
+  padding: "70px 80px",
+  background: "linear-gradient(135deg,#0f2027,#203a43,#2c5364)",
+  color: "#fff",
 };
 
-const containerStyle: React.CSSProperties = {
+const container: React.CSSProperties = {
   maxWidth: "1200px",
   margin: "0 auto",
-  padding: "40px 20px",
+  padding: "60px 40px",
 };
 
-const footerStyle: React.CSSProperties = {
-  marginTop: "80px",
-  padding: "20px",
+const footer: React.CSSProperties = {
   textAlign: "center",
+  padding: "30px",
   color: "#777",
-  fontSize: "14px",
 };
