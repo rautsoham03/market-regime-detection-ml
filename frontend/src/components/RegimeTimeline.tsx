@@ -8,14 +8,13 @@ type TimelinePoint = {
   regime_label: "Stable" | "Uncertain" | "Crisis";
 };
 
-// Corporate Colors
 const regimeColor = (label: string) => {
-  if (label === "Stable") return "#10b981"; // Success Green
-  if (label === "Uncertain") return "#f59e0b"; // Warning Amber
-  return "#ef4444"; // Danger Red
+  if (label === "Stable") return "#10b981";
+  if (label === "Uncertain") return "#f59e0b";
+  return "#ef4444";
 };
 
-// DEFINING PROPS HERE FIXES THE ERROR
+// FIX: Explicitly typed props
 export default function RegimeTimeline({ selectedDate }: { selectedDate?: string }) {
   const [data, setData] = useState<TimelinePoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,13 +60,10 @@ export default function RegimeTimeline({ selectedDate }: { selectedDate?: string
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
             />
             
-            {/* Show where the user currently is */}
             {selectedDate && <ReferenceLine x={selectedDate} stroke="#2563eb" strokeDasharray="3 3" />}
 
-            {/* Base grey line for continuity */}
             <Line dataKey="close" stroke="#cbd5e1" strokeWidth={1} dot={false} isAnimationActive={false} />
 
-            {/* Colored segments for Regimes */}
             {data.map((entry, i) => {
               if (i === 0) return null;
               const prev = data[i - 1];
@@ -97,23 +93,12 @@ const LegendItem = ({ color, label }: any) => (
   </div>
 );
 
-// We use 'as const' to fix CSS type errors
 const styles = {
-  container: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '32px',
-    boxShadow: 'var(--shadow-md)',
-    border: '1px solid #e2e8f0',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
+  container: { background: '#fff', borderRadius: '12px', padding: '32px', boxShadow: 'var(--shadow-md)', border: '1px solid #e2e8f0' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
   title: { fontSize: '18px', color: 'var(--primary)' },
   legend: { display: 'flex', gap: '20px' },
   chartWrapper: { fontSize: '12px' },
+  // FIX: Cast "center" as const to satisfy TypeScript strict typing
   loading: { padding: '40px', textAlign: 'center' as const, color: 'var(--text-muted)' }
 };
