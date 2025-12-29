@@ -50,7 +50,6 @@ quotes_csv_path = None
 if data_dir:
     main_csv_path = data_dir / "nifty50_final_with_labels.csv"
     quotes_csv_path = data_dir / "Investors.csv"
-    # Case-insensitive check
     if not quotes_csv_path.exists():
         for f in os.listdir(data_dir):
             if f.lower() == "investors.csv":
@@ -96,29 +95,19 @@ if not quotes_data:
 
 
 # ----------------------------------
-# Helpers: Risk Logic (IMPROVED)
+# Helpers: Risk Logic
 # ----------------------------------
 
 def calculate_risk_metrics(row, lookback_window=5):
-    # 1. Early Warning Probability (Smoothed & Desensitized)
     vol_20 = row.get('vol_20', 0.01)
     vol_60 = row.get('vol_60', 0.01)
     
-    # Calculate Ratio: Is short-term vol higher than long-term vol?
     vol_ratio = vol_20 / vol_60 if vol_60 > 0 else 1.0
     
-    # --- UPDATED SENSITIVITY ---
-    # OLD: [1.0, 1.3, 2.0] -> Triggered "Warning" too easily.
-    # NEW: [1.1, 1.6, 2.5] 
-    # Logic: 
-    # - Ratio < 1.1 (Short term vol is normal): ~10% Risk (Low)
-    # - Ratio = 1.6 (Vol is 60% higher than normal): ~50% Risk (Medium)
-    # - Ratio > 2.5 (Vol is 2.5x normal): ~90% Risk (Critical)
-    # This prevents "False Alarms" in Stable regimes.
+    # Smoothed sensitivity
     prob_score = np.interp(vol_ratio, [1.1, 1.6, 2.5], [10, 50, 95])
     early_warning_prob = int(np.clip(prob_score, 0, 99))
 
-    # 2. Recent Regime Change Alert
     current_date_idx = df.index.get_loc(row.name)
     start_idx = max(0, current_date_idx - lookback_window)
     recent_slice = df.iloc[start_idx:current_date_idx+1]
@@ -156,6 +145,45 @@ def investor_guidance(
     row = df.loc[date_obj]
     row.name = date_obj 
 
+    # --- NEW: CALCULATE REGIME-SPECIFIC PERFORMANCE ---
+    # We filter data to isolate ONLY the current regime block up to the selected date.
+    block_id = row['regime_block']
+    
+    # 1. Get all days belonging to this specific regime block
+    block_data = df[df['regime_block'] == block_id]
+    
+    # 2. Slice it: Start of regime -> Selected Date
+    # This prevents "looking into the future" for the metrics
+    regime_slice = block_data[block_data.index <= date_obj]
+    
+    if len(regime_slice) > 0:
+        start_price = regime_slice.iloc[0]['close']
+        current_price = row['close']
+        
+        # A. Regime Return (Absolute % change since regime start)
+        regime_return = (current_price / start_price) - 1
+        
+        # B. Regime Volatility (Realized volatility during this period)
+        if len(regime_slice) > 5:
+            regime_vol = regime_slice['log_return'].std() * np.sqrt(252)
+        else:
+            regime_vol = row['vol_20'] # Fallback for new regimes
+            
+        # C. Regime Drawdown (Max loss encountered during this period)
+        # We calculate "Drawdown from Peak" within this specific slice
+        slice_prices = regime_slice['close']
+        running_max = slice_prices.cummax()
+        slice_drawdowns = (slice_prices / running_max) - 1
+        regime_drawdown = slice_drawdowns.min()
+        
+    else:
+        # Fallback (should theoretically not happen)
+        regime_return = 0.0
+        regime_vol = row['vol_20']
+        regime_drawdown = 0.0
+
+    # --------------------------------------------------
+
     ew_prob, recent_change = calculate_risk_metrics(row)
 
     historical_stats = {
@@ -164,14 +192,11 @@ def investor_guidance(
         "max_drawdown": float(df["drawdown"].min()),
     }
 
-    # Use 'mean_return_20' for smoother annualized display
-    safe_avg_return = float(row.get("mean_return_20", row["log_return"]))
-
     response = regime_investor_guidance_json(
         regime_label=row["regime_label"],
-        avg_return=safe_avg_return, 
-        volatility=float(row["vol_20"]),
-        max_drawdown=float(row["drawdown"]),
+        avg_return=float(regime_return),    # <--- SENDING REGIME RETURN
+        volatility=float(regime_vol),       # <--- SENDING REGIME VOL
+        max_drawdown=float(regime_drawdown),# <--- SENDING REGIME DRAWDOWN
         regime_start_date=str(row["regime_start_date"]),
         regime_duration_days=int(row["regime_duration_days"]),
         persona=persona,
