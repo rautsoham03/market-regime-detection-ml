@@ -8,7 +8,29 @@ A full-stack, regime-aware market intelligence platform that detects market regi
 
 Built using **FastAPI**, **React (Vite + TypeScript)**, and **Machine Learning–driven regime analysis**.
 
+
+**🚀 Deployed Live on Render**
 ---
+
+## 🔗 Live Demo
+
+###   Frontend Dashboard: [[Insert Your Render Frontend URL Here]](https://market-regime-frontend.onrender.com/)
+
+> **⚠️ Important Note:** This project is hosted on Render's **Free Tier**. If the dashboard fails to load data initially, the server has likely "slept" due to inactivity. Please **wait 60 seconds** for the backend to spin up and then refresh the page.
+
+
+## 📸 Project Demo
+
+<img width="800" height="300" alt="image" src="https://github.com/user-attachments/assets/ee7c982d-7695-4292-bc8c-620944ac9387" />
+
+<img width="800" height="300" alt="image" src="https://github.com/user-attachments/assets/900cc637-abd5-4979-a1fc-831370192728" />
+
+<img width="800" height="300" alt="image" src="https://github.com/user-attachments/assets/acbd77de-f61a-4a46-8d57-09e64c4d9e3d" />
+
+<img width="800" height="300" alt="image" src="https://github.com/user-attachments/assets/b7efd0cc-6299-4708-86aa-f3770a931155" />
+
+
+ 
 
 ## 🚀 Key Features
 
@@ -99,7 +121,21 @@ Frontend runs at: http://localhost:5173
 <img width="788" height="162" alt="image" src="https://github.com/user-attachments/assets/937c6f05-fd5c-4a29-bf37-5b82ce35120b" />
 
 
+
 ```text
+
+☁️ Deployment Details
+This project is fully deployed using Render:
+
+Backend: Hosted as a Python Web Service (FastAPI).
+
+Note: Uses intelligent relative path logic to find CSV data in production environments.
+
+Frontend: Hosted as a Static Site (React/Vite).
+
+Data: CSV files are bundled directly with the backend container for fast, zero-latency access.
+
+
 📌 Usage Guide
 Dashboard: Select a date to see the historical market regime and vital signs (Volatility, Return).
 
