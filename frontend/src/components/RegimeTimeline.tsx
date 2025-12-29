@@ -6,7 +6,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 import { API_BASE } from "../config";
 
@@ -14,19 +13,20 @@ import { API_BASE } from "../config";
    Types
 -------------------------------- */
 
-type RegimePoint = {
+type TimelinePoint = {
   date: string;
-  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
+  close: number;
+  regime_label: "Stable" | "Uncertain" | "Crisis";
 };
 
 /* -------------------------------
    Helpers
 -------------------------------- */
 
-const regimeColor = (r: number) => {
-  if (r === 0) return "#2ecc71"; // green
-  if (r === 1) return "#f1c40f"; // yellow
-  return "#e74c3c"; // red
+const regimeColor = (label: TimelinePoint["regime_label"]) => {
+  if (label === "Stable") return "#2e7d32";
+  if (label === "Uncertain") return "#f9a825";
+  return "#c62828";
 };
 
 /* -------------------------------
@@ -34,80 +34,83 @@ const regimeColor = (r: number) => {
 -------------------------------- */
 
 export default function RegimeTimeline() {
-  const [data, setData] = useState<RegimePoint[]>([]);
+  const [data, setData] = useState<TimelinePoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/regime-timeline`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch timeline");
-        return res.json();
-      })
-      .then((rows: RegimePoint[]) => {
-        setData(rows);
-        setError(null);
-      })
-      .catch(() => {
-        setError("Unable to load market regime timeline");
-      })
+      .then((res) => res.json())
+      .then(setData)
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p style={{ marginTop: 20 }}>Loading market regime timeline…</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (loading) return <p>Loading market timeline…</p>;
 
   return (
-    <div
-      style={{
-        marginTop: "40px",
-        padding: "24px",
-        background: "#ffffff",
-        borderRadius: "12px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-      }}
-    >
-      <h3 style={{ marginBottom: 16 }}>📈 Market Regime Timeline</h3>
+    <section style={section}>
+      <h3 style={title}>📈 NIFTY 50 Market Regime Timeline</h3>
 
-      {/* IMPORTANT: height MUST be explicit */}
-      <div style={{ width: "100%", height: 260 }}>
-        <ResponsiveContainer>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" hide />
-            <YAxis
-              domain={[0, 2]}
-              ticks={[0, 1, 2]}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip />
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={data}>
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} />
+          <Tooltip />
 
-            <Line
-              type="stepAfter"
-              dataKey="regime"
-              stroke="#34495e"
-              strokeWidth={2}
-              dot={({ cx, cy, payload }) => (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={4}
-                  fill={regimeColor(payload.regime)}
-                  stroke="none"
-                />
-              )}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+          <Line
+            dataKey="close"
+            strokeWidth={2}
+            dot={false}
+            stroke="#999"
+            isAnimationActive={false}
+          />
+
+          {data.map((_, i) =>
+            i === 0 ? null : (
+              <Line
+                key={i}
+                data={[
+                  data[i - 1],
+                  data[i],
+                ]}
+                dataKey="close"
+                stroke={regimeColor(data[i].regime_label)}
+                strokeWidth={3}
+                dot={false}
+                isAnimationActive={false}
+              />
+            )
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+
+      <div style={legend}>
+        <span style={{ color: "#2e7d32" }}>🟢 Stable</span>
+        <span style={{ color: "#f9a825" }}>🟡 Uncertain</span>
+        <span style={{ color: "#c62828" }}>🔴 Crisis</span>
       </div>
-
-      {/* Legend */}
-      <div style={{ marginTop: 12, fontSize: 13 }}>
-        <span style={{ color: "#2ecc71", marginRight: 12 }}>🟢 Stable</span>
-        <span style={{ color: "#f1c40f", marginRight: 12 }}>🟡 Uncertain</span>
-        <span style={{ color: "#e74c3c" }}>🔴 Crisis</span>
-      </div>
-    </div>
+    </section>
   );
 }
 
+/* -------------------------------
+   Styles
+-------------------------------- */
+
+const section: React.CSSProperties = {
+  background: "#ffffff",
+  borderRadius: "12px",
+  padding: "24px",
+  marginTop: "30px",
+  boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+};
+
+const title: React.CSSProperties = {
+  marginBottom: "15px",
+};
+
+const legend: React.CSSProperties = {
+  display: "flex",
+  gap: "20px",
+  marginTop: "10px",
+  fontSize: "14px",
+};
