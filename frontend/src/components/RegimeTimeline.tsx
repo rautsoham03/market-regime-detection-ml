@@ -3,8 +3,10 @@ import {
   LineChart,
   Line,
   XAxis,
+  YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import { API_BASE } from "../config";
 
@@ -14,54 +16,18 @@ import { API_BASE } from "../config";
 
 type RegimePoint = {
   date: string;
-  regime: number;
+  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
 };
 
 /* -------------------------------
    Helpers
 -------------------------------- */
 
-const regimeLabel = (r: number) => {
-  if (r === 0) return "Stable";
-  if (r === 1) return "Uncertain";
-  return "Crisis";
-};
-
 const regimeColor = (r: number) => {
-  if (r === 0) return "#2e7d32";
-  if (r === 1) return "#f9a825";
-  return "#c62828";
+  if (r === 0) return "#2ecc71"; // green
+  if (r === 1) return "#f1c40f"; // yellow
+  return "#e74c3c"; // red
 };
-
-/* -------------------------------
-   Custom Tooltip (NO TS ERRORS)
--------------------------------- */
-
-function RegimeTooltip({ active, payload }: any) {
-  if (!active || !payload || !payload.length) return null;
-
-  const point = payload[0].payload as RegimePoint;
-
-  return (
-    <div
-      style={{
-        background: "#fff",
-        padding: "10px 12px",
-        borderRadius: 6,
-        border: "1px solid #ddd",
-        fontSize: 13,
-      }}
-    >
-      <strong>{point.date}</strong>
-      <div style={{ marginTop: 4 }}>
-        Regime:{" "}
-        <span style={{ color: regimeColor(point.regime) }}>
-          {regimeLabel(point.regime)}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /* -------------------------------
    Component
@@ -82,30 +48,44 @@ export default function RegimeTimeline() {
         setData(rows);
         setError(null);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setError("Unable to load market regime timeline");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p>Loading market regime timeline…</p>;
+  if (loading) return <p style={{ marginTop: 20 }}>Loading market regime timeline…</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
-  if (!data.length) return <p>No regime data available</p>;
 
   return (
-    <section style={card}>
-      <h3 style={{ marginBottom: 12 }}>📈 Market Regime Timeline</h3>
+    <div
+      style={{
+        marginTop: "40px",
+        padding: "24px",
+        background: "#ffffff",
+        borderRadius: "12px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+      }}
+    >
+      <h3 style={{ marginBottom: 16 }}>📈 Market Regime Timeline</h3>
 
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      {/* IMPORTANT: height MUST be explicit */}
+      <div style={{ width: "100%", height: 260 }}>
+        <ResponsiveContainer>
           <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" hide />
-            <Tooltip content={<RegimeTooltip />} />
+            <YAxis
+              domain={[0, 2]}
+              ticks={[0, 1, 2]}
+              tick={{ fontSize: 12 }}
+            />
+            <Tooltip />
+
             <Line
               type="stepAfter"
               dataKey="regime"
-              stroke="#555"
+              stroke="#34495e"
               strokeWidth={2}
               dot={({ cx, cy, payload }) => (
                 <circle
@@ -121,23 +101,13 @@ export default function RegimeTimeline() {
         </ResponsiveContainer>
       </div>
 
-      <div style={{ marginTop: 8, fontSize: 13 }}>
-        <span style={{ color: "#2e7d32" }}>● Stable</span>{" "}
-        <span style={{ color: "#f9a825" }}>● Uncertain</span>{" "}
-        <span style={{ color: "#c62828" }}>● Crisis</span>
+      {/* Legend */}
+      <div style={{ marginTop: 12, fontSize: 13 }}>
+        <span style={{ color: "#2ecc71", marginRight: 12 }}>🟢 Stable</span>
+        <span style={{ color: "#f1c40f", marginRight: 12 }}>🟡 Uncertain</span>
+        <span style={{ color: "#e74c3c" }}>🔴 Crisis</span>
       </div>
-    </section>
+    </div>
   );
 }
 
-/* -------------------------------
-   Styles
--------------------------------- */
-
-const card: React.CSSProperties = {
-  background: "#ffffff",
-  borderRadius: "14px",
-  padding: "24px",
-  boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-  marginTop: "40px",
-};
