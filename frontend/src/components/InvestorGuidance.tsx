@@ -3,7 +3,6 @@ import html2pdf from "html2pdf.js";
 import { API_BASE } from "../config";
 import { Download, TrendingUp, AlertTriangle, Shield, Target, AlertCircle, Activity } from "lucide-react";
 
-// Updated type definition including new risk metrics
 type GuidanceResponse = {
   regime: string;
   start_date: string;
@@ -18,7 +17,6 @@ type GuidanceResponse = {
   actions: string[];
   investment_avenues: string[];
   risk_focus: string;
-  // New metrics from backend
   early_warning_prob: number;
   recent_regime_change: boolean;
 };
@@ -53,7 +51,6 @@ export default function InvestorGuidance({ date }: { date: string }) {
 
   const theme = getRegimeStyles(data.regime);
   
-  // Calculate risk color for the new bar
   let riskColor = "#10b981";
   if (data.early_warning_prob > 40) riskColor = "#f59e0b";
   if (data.early_warning_prob > 75) riskColor = "#ef4444";
@@ -61,7 +58,6 @@ export default function InvestorGuidance({ date }: { date: string }) {
   return (
     <section id="guidance-card" style={styles.card}>
       
-      {/* 1. New Alert Banner for Recent Changes */}
       {data.recent_regime_change && (
         <div style={styles.alertBanner}>
           <AlertCircle size={18} /> 
@@ -83,13 +79,28 @@ export default function InvestorGuidance({ date }: { date: string }) {
 
       <hr style={styles.divider} />
 
+      {/* --- UPDATED LABELS FOR CLARITY --- */}
       <div style={styles.grid}>
-        <MetricBox label="Avg Return (Ann.)" value={`${(data.metrics.average_return * 252 * 100).toFixed(1)}%`} icon={<TrendingUp size={16}/>} />
-        <MetricBox label="Volatility (Ann.)" value={`${(data.metrics.volatility * Math.sqrt(252) * 100).toFixed(1)}%`} icon={<Activity size={16}/>} />
-        <MetricBox label="Max Drawdown" value={`${(data.metrics.max_drawdown * 100).toFixed(1)}%`} icon={<Download size={16}/>} color="#ef4444"/>
+        {/* Changed from "Avg Return" to "Current Trend" to explain why it might be negative */}
+        <MetricBox 
+            label="Current Trend (Ann.)" 
+            value={`${(data.metrics.average_return * 252 * 100).toFixed(1)}%`} 
+            icon={<TrendingUp size={16}/>} 
+        />
+        {/* Changed to "Current Volatility" to show it's the live risk level */}
+        <MetricBox 
+            label="Current Volatility (Ann.)" 
+            value={`${(data.metrics.volatility * Math.sqrt(252) * 100).toFixed(1)}%`} 
+            icon={<Activity size={16}/>} 
+        />
+        <MetricBox 
+            label="Max Drawdown" 
+            value={`${(data.metrics.max_drawdown * 100).toFixed(1)}%`} 
+            icon={<Download size={16}/>} 
+            color="#ef4444"
+        />
       </div>
 
-      {/* 2. New Risk & Early Warning Section */}
       <div style={styles.riskSection}>
           <div style={{flex: 1}}>
               <h4 style={styles.sectionTitle}><Shield size={18} style={styles.icon}/> Dominant Risk Focus</h4>
