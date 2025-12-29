@@ -7,31 +7,37 @@ export default function TacticalAllocation({ date }: { date: string }) {
   const [allocation, setAllocation] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [regime, setRegime] = useState("");
+  // New state to hold return info
+  const [regimeReturn, setRegimeReturn] = useState(0);
 
   useEffect(() => {
     fetch(`${API_BASE}/investor-guidance?date=${date}`)
       .then(res => res.json())
       .then(data => {
         setRegime(data.regime);
-        // Map text logic to percentages for visualization
+        // data.metrics.average_return is now the REGIME TOTAL RETURN
+        setRegimeReturn(data.metrics.average_return * 100); 
+
         const mapping = getRegimeAllocation(data.regime);
         setAllocation([
-          { name: 'Equity', value: mapping.equity, color: '#2563eb' }, // Blue
-          { name: 'Debt / Bonds', value: mapping.debt, color: '#10b981' }, // Green
-          { name: 'Cash / Gold', value: mapping.cash, color: '#f59e0b' }, // Gold
+          { name: 'Equity', value: mapping.equity, color: '#2563eb' }, 
+          { name: 'Debt / Bonds', value: mapping.debt, color: '#10b981' }, 
+          { name: 'Cash / Gold', value: mapping.cash, color: '#f59e0b' }, 
         ]);
       })
       .finally(() => setLoading(false));
   }, [date]);
 
-  // Helper to determine percentages based on Regime
   const getRegimeAllocation = (regimeLabel: string) => {
     if (regimeLabel.includes("Stable")) return { equity: 70, debt: 20, cash: 10 };
     if (regimeLabel.includes("Uncertain")) return { equity: 40, debt: 40, cash: 20 };
-    return { equity: 10, debt: 50, cash: 40 }; // Crisis
+    return { equity: 10, debt: 50, cash: 40 }; 
   };
 
   if (loading) return <div style={styles.loading}>Calculating Optimal Mix...</div>;
+
+  // Determine color for the return value
+  const returnColor = regimeReturn >= 0 ? '#16a34a' : '#dc2626';
 
   return (
     <div className="animate-fade-in delay-1" style={styles.container}>
@@ -39,8 +45,11 @@ export default function TacticalAllocation({ date }: { date: string }) {
         <PieIcon size={24} color="#2563eb" />
         <h2 style={styles.title}>Tactical Asset Allocation</h2>
       </div>
+      
+      {/* Updated Subtitle with Performance Context */}
       <p style={styles.subtitle}>
-        Recommended portfolio split for the <strong>{regime}</strong> regime.
+        Recommended portfolio split for the <strong>{regime}</strong> regime.<br/>
+        Performance since regime start: <strong style={{color: returnColor}}>{regimeReturn > 0 ? '+' : ''}{regimeReturn.toFixed(1)}%</strong>
       </p>
 
       <div style={styles.contentGrid}>
@@ -52,51 +61,51 @@ export default function TacticalAllocation({ date }: { date: string }) {
                 data={allocation}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
+                innerRadius={80} 
+                outerRadius={120}
+                paddingAngle={4}
                 dataKey="value"
               >
                 {allocation.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2}/>
                 ))}
               </Pie>
               <Tooltip 
                 formatter={(value: number) => `${value}%`}
                 contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
               />
-              <Legend verticalAlign="bottom" height={36}/>
+              <Legend verticalAlign="bottom" height={36} iconType="circle"/>
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Details Section */}
         <div style={styles.detailsBox}>
-          <h3 style={styles.detailsTitle}>Why this allocation?</h3>
+          <h3 style={styles.detailsTitle}>Strategy Rationale</h3>
           
           <div style={styles.detailItem}>
-            <TrendingUp size={18} color="#2563eb" style={{marginTop: 4}} />
+            <TrendingUp size={20} color="#2563eb" style={{marginTop: 4}} />
             <div>
               <span style={styles.label}>Equity ({allocation[0].value}%)</span>
               <p style={styles.desc}>
-                {regime.includes("Stable") ? "Aggressive growth focus." : "Reduced to minimize drawdown risk."}
+                {regime.includes("Stable") ? "Maximize growth capture during stable uptrends." : "Significantly reduced to minimize drawdown risk."}
               </p>
             </div>
           </div>
 
           <div style={styles.detailItem}>
-            <Shield size={18} color="#10b981" style={{marginTop: 4}} />
+            <Shield size={20} color="#10b981" style={{marginTop: 4}} />
             <div>
               <span style={styles.label}>Debt ({allocation[1].value}%)</span>
-              <p style={styles.desc}>Stability and income generation.</p>
+              <p style={styles.desc}>Provides portfolio stability and steady income generation.</p>
             </div>
           </div>
 
           <div style={styles.detailItem}>
-            <DollarSign size={18} color="#f59e0b" style={{marginTop: 4}} />
+            <DollarSign size={20} color="#f59e0b" style={{marginTop: 4}} />
             <div>
               <span style={styles.label}>Cash ({allocation[2].value}%)</span>
-              <p style={styles.desc}>Dry powder for opportunities.</p>
+              <p style={styles.desc}>Dry powder to deploy when better opportunities arise.</p>
             </div>
           </div>
         </div>
@@ -106,16 +115,16 @@ export default function TacticalAllocation({ date }: { date: string }) {
 }
 
 const styles: any = {
-  container: { background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
-  loading: { padding: '40px', textAlign: 'center', color: '#64748b' },
+  container: { background: '#fff', borderRadius: '16px', padding: '40px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
+  loading: { padding: '60px', textAlign: 'center', color: '#64748b', fontSize: '16px', fontWeight: 500 },
   header: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' },
-  title: { fontSize: '20px', fontWeight: 700, margin: 0, color: '#0f172a' },
-  subtitle: { color: '#64748b', marginBottom: '32px' },
-  contentGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center' },
-  chartBox: { height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  detailsBox: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  detailsTitle: { fontSize: '16px', fontWeight: 600, color: '#0f172a', marginBottom: '10px' },
-  detailItem: { display: 'flex', gap: '12px', alignItems: 'flex-start' },
-  label: { fontWeight: 600, color: '#334155', fontSize: '15px' },
-  desc: { margin: '4px 0 0 0', fontSize: '13px', color: '#64748b', lineHeight: '1.4' }
+  title: { fontSize: '22px', fontWeight: 700, margin: 0, color: '#0f172a' },
+  subtitle: { color: '#64748b', marginBottom: '40px', fontSize: '15px', lineHeight: '1.6' },
+  contentGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center' },
+  chartBox: { height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  detailsBox: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  detailsTitle: { fontSize: '18px', fontWeight: 600, color: '#0f172a', marginBottom: '12px' },
+  detailItem: { display: 'flex', gap: '16px', alignItems: 'flex-start', padding: '16px', background: '#f8fafc', borderRadius: '12px' },
+  label: { fontWeight: 700, color: '#334155', fontSize: '15px', display: 'block', marginBottom: '4px' },
+  desc: { margin: 0, fontSize: '14px', color: '#64748b', lineHeight: '1.5' }
 };
