@@ -1,66 +1,127 @@
+import React, { useState } from 'react';
 import InvestorGuidance from "./components/InvestorGuidance";
 import RegimeTimeline from "./components/RegimeTimeline";
+import './App.css'; // Ensure you import the CSS above
+import { Layout, Calendar } from 'lucide-react';
 
 export default function App() {
+  // Default to a recent trading date or today
+  const [selectedDate, setSelectedDate] = useState<string>("2024-11-21");
+
   return (
-    <div style={page}>
-      {/* HERO / HEADER */}
-      <header style={hero}>
-        <h1 style={title}>Market Regime Analytics</h1>
-        <p style={subtitle}>
-          Regime-aware market insights for long-term investors
-        </p>
+    <div className="app-wrapper">
+      
+      {/* 1. HEADER section */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div>
+            <div style={styles.logoRow}>
+              <Layout size={24} color="#2563eb" />
+              <h1 style={styles.brandName}>Market Regime Analytics</h1>
+            </div>
+            <p style={styles.subtitle}>Regime-aware market insights for long-term investors</p>
+          </div>
+
+          {/* Date Picker in Header */}
+          <div style={styles.dateControl}>
+            <label style={styles.label}>ANALYSIS DATE</label>
+            <div style={styles.inputWrapper}>
+              <Calendar size={16} color="#64748b" style={{marginRight: 8}}/>
+              <input 
+                type="date" 
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)} 
+              />
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* MAIN CONTENT */}
-      <main style={main}>
-        <InvestorGuidance />
-        <RegimeTimeline />
+      {/* 2. MAIN CONTENT */}
+      <main style={styles.main}>
+        {/* Pass the selected date down to the guidance card */}
+        <InvestorGuidance date={selectedDate} />
+        
+        {/* Pass the selected date to timeline for visualization context */}
+        <RegimeTimeline selectedDate={selectedDate} />
       </main>
 
-      {/* FOOTER */}
-      <footer style={footer}>
-        © 2025 Market Regime Analytics
+      {/* 3. FOOTER */}
+      <footer style={styles.footer}>
+        <p>© 2025 Market Regime Analytics • Internal Use Only</p>
       </footer>
     </div>
   );
 }
 
-/* -------------------------------
-   Styles
--------------------------------- */
-
-const page: React.CSSProperties = {
-  minHeight: "100vh",
-  background: "#f4f6f8",
-};
-
-const hero: React.CSSProperties = {
-  width: "100%",
-  padding: "60px 40px",
-  background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
-  color: "#ffffff",
-};
-
-const title: React.CSSProperties = {
-  fontSize: "42px",
-  marginBottom: "10px",
-};
-
-const subtitle: React.CSSProperties = {
-  fontSize: "16px",
-  opacity: 0.9,
-};
-
-const main: React.CSSProperties = {
-  maxWidth: "1280px",
-  margin: "0 auto",
-  padding: "40px 30px",
-};
-
-const footer: React.CSSProperties = {
-  textAlign: "center",
-  padding: "30px",
-  fontSize: "13px",
-  color: "#777",
+// Inline styles for layout structure (visuals handled in CSS)
+const styles = {
+  header: {
+    backgroundColor: '#fff',
+    borderBottom: '1px solid #e2e8f0',
+    padding: '20px 0',
+    boxShadow: 'var(--shadow-sm)',
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 10,
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '0 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap' as const,
+    gap: '20px',
+  },
+  logoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '4px',
+  },
+  brandName: {
+    fontSize: '20px',
+    color: 'var(--primary)',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: 'var(--text-muted)',
+    margin: 0,
+  },
+  dateControl: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'flex-end',
+  },
+  label: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    marginBottom: '4px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+  },
+  inputWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    background: '#fff',
+  },
+  main: {
+    maxWidth: '1200px',
+    margin: '40px auto',
+    padding: '0 24px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '40px',
+  },
+  footer: {
+    textAlign: 'center' as const,
+    padding: '40px 0',
+    color: 'var(--text-muted)',
+    fontSize: '13px',
+    borderTop: '1px solid #e2e8f0',
+    marginTop: '40px',
+  },
 };
