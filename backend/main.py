@@ -24,6 +24,7 @@ app.add_middleware(
 # Load & Clean Data
 # ----------------------------------
 
+# RELATIVE PATH SETUP (Works on local Windows & Cloud)
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 MAIN_DATA_PATH = DATA_DIR / "nifty50_final_with_labels.csv"
