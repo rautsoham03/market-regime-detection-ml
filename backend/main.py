@@ -50,7 +50,7 @@ quotes_csv_path = None
 if data_dir:
     main_csv_path = data_dir / "nifty50_final_with_labels.csv"
     quotes_csv_path = data_dir / "Investors.csv"
-    # Case-insensitive check for Investors.csv
+    # Case-insensitive check
     if not quotes_csv_path.exists():
         for f in os.listdir(data_dir):
             if f.lower() == "investors.csv":
@@ -96,23 +96,26 @@ if not quotes_data:
 
 
 # ----------------------------------
-# Helpers: Risk Logic
+# Helpers: Risk Logic (IMPROVED)
 # ----------------------------------
 
 def calculate_risk_metrics(row, lookback_window=5):
-    # 1. Early Warning Probability (Smoothed Logic)
+    # 1. Early Warning Probability (Smoothed & Desensitized)
     vol_20 = row.get('vol_20', 0.01)
     vol_60 = row.get('vol_60', 0.01)
     
     # Calculate Ratio: Is short-term vol higher than long-term vol?
     vol_ratio = vol_20 / vol_60 if vol_60 > 0 else 1.0
     
-    # TUNED SENSITIVITY:
-    # Previously: [0.8, 1.0, 1.5] -> Too sensitive. 1.0 ratio was 40% risk.
-    # New Logic:  [1.0, 1.3, 2.0] -> 1.0 ratio is 10% risk (Normal).
-    #                                1.3 ratio is 50% risk (Warning).
-    #                                2.0 ratio is 90% risk (Critical).
-    prob_score = np.interp(vol_ratio, [1.0, 1.3, 2.0], [10, 50, 90])
+    # --- UPDATED SENSITIVITY ---
+    # OLD: [1.0, 1.3, 2.0] -> Triggered "Warning" too easily.
+    # NEW: [1.1, 1.6, 2.5] 
+    # Logic: 
+    # - Ratio < 1.1 (Short term vol is normal): ~10% Risk (Low)
+    # - Ratio = 1.6 (Vol is 60% higher than normal): ~50% Risk (Medium)
+    # - Ratio > 2.5 (Vol is 2.5x normal): ~90% Risk (Critical)
+    # This prevents "False Alarms" in Stable regimes.
+    prob_score = np.interp(vol_ratio, [1.1, 1.6, 2.5], [10, 50, 95])
     early_warning_prob = int(np.clip(prob_score, 0, 99))
 
     # 2. Recent Regime Change Alert
@@ -161,13 +164,12 @@ def investor_guidance(
         "max_drawdown": float(df["drawdown"].min()),
     }
 
-    # FIX: Use 'mean_return_20' instead of single-day 'log_return'
-    # This ensures the annualized number on frontend is a Trend, not a Daily spike.
+    # Use 'mean_return_20' for smoother annualized display
     safe_avg_return = float(row.get("mean_return_20", row["log_return"]))
 
     response = regime_investor_guidance_json(
         regime_label=row["regime_label"],
-        avg_return=safe_avg_return, # PASSING THE ROLLING MEAN
+        avg_return=safe_avg_return, 
         volatility=float(row["vol_20"]),
         max_drawdown=float(row["drawdown"]),
         regime_start_date=str(row["regime_start_date"]),
