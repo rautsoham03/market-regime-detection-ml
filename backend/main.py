@@ -19,30 +19,34 @@ app.add_middleware(
 )
 
 # ----------------------------------
-# Load & Clean Data (CRITICAL FIXES FOR YOUR CSV)
+# Load & Clean Data
 # ----------------------------------
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "nifty50_final_with_labels.csv"
 
-# Load the CSV
+# Load data
 df = pd.read_csv(DATA_PATH, index_col=0, parse_dates=True)
 
-# FIX 1: Map complex CSV labels to simple Frontend labels
-# This ensures the Green/Yellow/Red colors work on the chart
+# --- CRITICAL FIX 1: Generate 'close' price for the graph ---
+# Your CSV has 'cum_return' but no 'close'. We proxy it so the graph draws a line.
+if 'close' not in df.columns:
+    if 'cum_return' in df.columns:
+        # Multiply by 8500 (approx Nifty start) to look like a real price index
+        df['close'] = df['cum_return'] * 8500
+    else:
+        # Fallback if both missing (unlikely based on your file)
+        df['close'] = 10000
+
+# --- CRITICAL FIX 2: Map Labels for Colors ---
+# Frontend expects "Stable", "Uncertain", "Crisis". Your CSV has "Stable / Bull Market".
 label_map = {
     "Stable / Bull Market": "Stable",
     "Uncertain / Transition": "Uncertain",
     "Crisis / High Volatility": "Crisis"
 }
-# Apply mapping if the labels match the CSV format
+# Only replace if the long labels exist
 df['regime_label'] = df['regime_label'].replace(label_map)
-
-# FIX 2: Generate 'close' price if missing (Using Cumulative Return proxy)
-# Your CSV lacked a 'close' column, causing the empty graph.
-if 'close' not in df.columns and 'cum_return' in df.columns:
-    # Multiply by ~8500 (approx Nifty start in 2015) to look like a price index
-    df['close'] = df['cum_return'] * 8500 
 
 df.sort_index(inplace=True)
 
@@ -60,6 +64,8 @@ def investor_guidance(
     persona: str = Query("Balanced", enum=["Conservative", "Balanced", "Aggressive"])
 ):
     date = pd.to_datetime(date)
+    
+    # Handle nearest date if selected date is a weekend/holiday
     if date not in df.index:
         date = df.index[df.index.get_loc(date, method="nearest")]
 
@@ -71,7 +77,6 @@ def investor_guidance(
         "max_drawdown": float(df["drawdown"].min()),
     }
 
-    # Ensure we handle the potentially renamed labels or original ones safely
     response = regime_investor_guidance_json(
         regime_label=row["regime_label"],
         avg_return=float(row["log_return"]),
@@ -86,25 +91,22 @@ def investor_guidance(
 
 @app.get("/regime-timeline")
 def regime_timeline():
-    # Now that we guaranteed 'close' exists, this will work
-    timeline_df = (
-        df.reset_index()
-        .rename(columns={"index": "date"})
-    )
-    
-    # Handle case where reset_index creates a column named "Price" instead of "date"
-    if "date" not in timeline_df.columns:
-        # Check if the index name was "Price"
-        if "Price" in timeline_df.columns:
-             timeline_df = timeline_df.rename(columns={"Price": "date"})
-        else:
-             # Fallback: rename the first column if it looks like a date
-             timeline_df.rename(columns={timeline_df.columns[0]: "date"}, inplace=True)
+    # Reset index to turn the Date Index into a column
+    timeline_df = df.reset_index()
 
-    # Select only what we need
+    # --- CRITICAL FIX 3: Rename Index to 'date' ---
+    # Your CSV index is named "Price", so reset_index() creates a column named "Price".
+    # The frontend looks for "date".
+    if "Price" in timeline_df.columns:
+        timeline_df = timeline_df.rename(columns={"Price": "date"})
+    elif "index" in timeline_df.columns:
+        timeline_df = timeline_df.rename(columns={"index": "date"})
+    
+    # Select only necessary columns
+    # We use 'close' (which we calculated above) and 'regime_label' (which we fixed above)
     final_df = timeline_df[["date", "close", "regime_label"]].tail(300)
     
-    # Convert to standard types for JSON
+    # formatting for JSON
     final_df["date"] = final_df["date"].astype(str)
     final_df["close"] = final_df["close"].astype(float)
 
