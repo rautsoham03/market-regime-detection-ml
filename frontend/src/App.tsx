@@ -1,37 +1,25 @@
 import InvestorGuidance from "./components/InvestorGuidance";
 import RegimeTimeline from "./components/RegimeTimeline";
 
-/* -------------------------------
-   App Layout
--------------------------------- */
-
 export default function App() {
   return (
-    <div style={appShell}>
-      {/* Header */}
-      <header style={header}>
-        <h1 style={title}>Investor Intelligence Dashboard</h1>
-        <p style={subtitle}>
+    <main style={pageStyle}>
+      <header style={headerStyle}>
+        <h1 style={{ marginBottom: 8 }}>Market Regime Analytics</h1>
+        <p style={{ color: "#555" }}>
           Regime-aware market insights for long-term investors
         </p>
       </header>
 
-      {/* Main Content */}
-      <main style={mainContent}>
-        <section style={section}>
-          <InvestorGuidance />
-        </section>
+      <section style={containerStyle}>
+        <InvestorGuidance />
+        <RegimeTimeline />
+      </section>
 
-        <section style={section}>
-          <RegimeTimeline />
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer style={footer}>
-        © {new Date().getFullYear()} Market Regime Analytics
+      <footer style={footerStyle}>
+        © 2025 Market Regime Analytics
       </footer>
-    </div>
+    </main>
   );
 }
 
@@ -39,46 +27,27 @@ export default function App() {
    Styles
 -------------------------------- */
 
-const appShell: React.CSSProperties = {
+const pageStyle: React.CSSProperties = {
   minHeight: "100vh",
-  width: "100%",
-  background: "#f4f6f8", // clean professional bg
-  display: "flex",
-  flexDirection: "column",
+  background: "#f4f6f8",
 };
 
-const header: React.CSSProperties = {
-  padding: "24px 32px",
+const headerStyle: React.CSSProperties = {
+  padding: "40px 20px",
   background: "#ffffff",
-  borderBottom: "1px solid #e0e0e0",
+  borderBottom: "1px solid #e5e5e5",
 };
 
-const title: React.CSSProperties = {
-  margin: 0,
-  fontSize: "26px",
-  fontWeight: 600,
-};
-
-const subtitle: React.CSSProperties = {
-  marginTop: "6px",
-  color: "#666",
-};
-
-const mainContent: React.CSSProperties = {
-  width: "100%",
-  maxWidth: "1400px",
+const containerStyle: React.CSSProperties = {
+  maxWidth: "1200px",
   margin: "0 auto",
-  padding: "32px",
+  padding: "40px 20px",
 };
 
-const section: React.CSSProperties = {
-  marginBottom: "40px",
-};
-
-const footer: React.CSSProperties = {
-  marginTop: "auto",
-  padding: "16px",
+const footerStyle: React.CSSProperties = {
+  marginTop: "80px",
+  padding: "20px",
   textAlign: "center",
-  fontSize: "13px",
   color: "#777",
+  fontSize: "14px",
 };
