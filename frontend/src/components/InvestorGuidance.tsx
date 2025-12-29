@@ -79,22 +79,24 @@ export default function InvestorGuidance({ date }: { date: string }) {
 
       <hr style={styles.divider} />
 
-      {/* --- UPDATED LABELS FOR CLARITY --- */}
+      {/* --- METRICS: NOW SHOWING REGIME SPECIFIC DATA --- */}
       <div style={styles.grid}>
-        {/* Changed from "Avg Return" to "Current Trend" to explain why it might be negative */}
+        {/* Metric 1: Return since the start of this regime */}
         <MetricBox 
-            label="Current Trend (Ann.)" 
-            value={`${(data.metrics.average_return * 252 * 100).toFixed(1)}%`} 
+            label="Regime Return (Total)" 
+            value={`${(data.metrics.average_return * 100).toFixed(1)}%`} 
             icon={<TrendingUp size={16}/>} 
+            color={data.metrics.average_return >= 0 ? "#10b981" : "#ef4444"}
         />
-        {/* Changed to "Current Volatility" to show it's the live risk level */}
+        {/* Metric 2: Realized Volatility during this regime */}
         <MetricBox 
-            label="Current Volatility (Ann.)" 
-            value={`${(data.metrics.volatility * Math.sqrt(252) * 100).toFixed(1)}%`} 
+            label="Regime Volatility" 
+            value={`${(data.metrics.volatility * 100).toFixed(1)}%`} 
             icon={<Activity size={16}/>} 
         />
+        {/* Metric 3: Max Drawdown encountered during this regime */}
         <MetricBox 
-            label="Max Drawdown" 
+            label="Regime Max Drawdown" 
             value={`${(data.metrics.max_drawdown * 100).toFixed(1)}%`} 
             icon={<Download size={16}/>} 
             color="#ef4444"
