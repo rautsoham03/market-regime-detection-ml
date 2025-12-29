@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import InvestorGuidance from "./components/InvestorGuidance";
 import RegimeTimeline from "./components/RegimeTimeline";
-import './App.css'; // Ensure you import the CSS above
+import './App.css'; 
 import { Layout, Calendar } from 'lucide-react';
 
 export default function App() {
-  // Default to a recent trading date or today
   const [selectedDate, setSelectedDate] = useState<string>("2024-11-21");
 
   return (
     <div className="app-wrapper">
       
-      {/* 1. HEADER section */}
+      {/* HEADER section */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <div>
@@ -22,7 +21,7 @@ export default function App() {
             <p style={styles.subtitle}>Regime-aware market insights for long-term investors</p>
           </div>
 
-          {/* Date Picker in Header */}
+          {/* Date Picker */}
           <div style={styles.dateControl}>
             <label style={styles.label}>ANALYSIS DATE</label>
             <div style={styles.inputWrapper}>
@@ -37,16 +36,13 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2. MAIN CONTENT */}
+      {/* MAIN CONTENT */}
       <main style={styles.main}>
-        {/* Pass the selected date down to the guidance card */}
         <InvestorGuidance date={selectedDate} />
-        
-        {/* Pass the selected date to timeline for visualization context */}
         <RegimeTimeline selectedDate={selectedDate} />
       </main>
 
-      {/* 3. FOOTER */}
+      {/* FOOTER */}
       <footer style={styles.footer}>
         <p>© 2025 Market Regime Analytics • Internal Use Only</p>
       </footer>
@@ -54,7 +50,7 @@ export default function App() {
   );
 }
 
-// Inline styles for layout structure (visuals handled in CSS)
+// Inline styles
 const styles = {
   header: {
     backgroundColor: '#fff',
