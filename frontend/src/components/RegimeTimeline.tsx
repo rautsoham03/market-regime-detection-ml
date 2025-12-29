@@ -7,8 +7,7 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   ReferenceLine, 
-  CartesianGrid, 
-  Legend 
+  CartesianGrid 
 } from "recharts";
 import { API_BASE } from "../config";
 
@@ -37,7 +36,7 @@ export default function RegimeTimeline({ selectedDate }: { selectedDate?: string
   }, []);
 
   // ---------------------------------------------------------
-  // 1. DYNAMIC GRADIENT GENERATOR
+  // DYNAMIC GRADIENT GENERATOR
   // This calculates exactly where colors should change (0% to 100%)
   // based on the regime data points.
   // ---------------------------------------------------------
@@ -90,7 +89,7 @@ export default function RegimeTimeline({ selectedDate }: { selectedDate?: string
       <div style={styles.chartWrapper}>
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-            {/* 2. DEFINITIONS: Apply the Gradient we calculated above */}
+            {/* DEFINITIONS: Apply the Gradient we calculated above */}
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
                 {gradientStops}
@@ -112,7 +111,7 @@ export default function RegimeTimeline({ selectedDate }: { selectedDate?: string
               <ReferenceLine x={selectedDate} stroke="#2563eb" strokeDasharray="3 3" label={{ value: 'Analysis Date', position: 'insideTopLeft', fill: '#2563eb', fontSize: 11 }} />
             )}
 
-            {/* 3. AREA COMPONENT: This draws the Line AND the Fill */}
+            {/* AREA COMPONENT: This draws the Line AND the Fill */}
             <Area 
               type="monotone" 
               dataKey="close" 
