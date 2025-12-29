@@ -35,7 +35,7 @@ if 'close' not in df.columns:
         # Multiply by 8500 (approx Nifty start) to look like a real price index
         df['close'] = df['cum_return'] * 8500
     else:
-        # Fallback if both missing (unlikely based on your file)
+        # Fallback if both missing
         df['close'] = 10000
 
 # --- CRITICAL FIX 2: Map Labels for Colors ---
