@@ -26,6 +26,7 @@ const getRegimeStyles = (regime: string) => {
   return { bg: "#fee2e2", text: "#991b1b", border: "#ef4444", label: "Crisis / Bear" };
 };
 
+// DEFINING THE PROPS INTERFACE HERE FIXES THE ERROR
 export default function InvestorGuidance({ date }: { date: string }) {
   const [data, setData] = useState<GuidanceResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -110,8 +111,8 @@ export default function InvestorGuidance({ date }: { date: string }) {
         </div>
       </div>
 
-      {/* Export Button (Hide from PDF via class if needed, but handled by ref selection) */}
-      <div style={{marginTop: '24px', textAlign: 'right'}}>
+      {/* Export Button */}
+      <div style={{marginTop: '24px', textAlign: 'right' as const}}>
         <button onClick={exportPDF} style={styles.button}>
           <Download size={16} style={{marginRight: 8}}/> Export Report (PDF)
         </button>
@@ -120,6 +121,7 @@ export default function InvestorGuidance({ date }: { date: string }) {
   );
 }
 
+// Helper Component
 const MetricBox = ({ label, value, icon, color = "#1e293b" }: any) => (
   <div style={styles.metricBox}>
     <div style={{display:'flex', alignItems:'center', gap: 6, color: '#64748b', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase'}}>
@@ -129,6 +131,7 @@ const MetricBox = ({ label, value, icon, color = "#1e293b" }: any) => (
   </div>
 );
 
+// CSS Styles
 const styles: any = {
   card: {
     background: '#fff',
@@ -170,6 +173,6 @@ const styles: any = {
     display: 'inline-flex', alignItems: 'center', padding: '10px 20px', background: 'var(--primary)', color: '#fff', 
     border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.2s'
   },
-  loading: { padding: '40px', textAlign: 'center', color: 'var(--text-muted)' },
-  empty: { padding: '40px', textAlign: 'center', color: 'var(--text-muted)', background: '#fff', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }
+  loading: { padding: '40px', textAlign: 'center' as const, color: 'var(--text-muted)' },
+  empty: { padding: '40px', textAlign: 'center' as const, color: 'var(--text-muted)', background: '#fff', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }
 };
