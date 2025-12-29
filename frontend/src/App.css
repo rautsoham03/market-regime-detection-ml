@@ -6,6 +6,15 @@
   --bg-body: #f8fafc;
   --text-main: #1e293b;
   --text-muted: #64748b;
+
+  /* --- NEW HEADER VARIABLES --- */
+  --header-bg: #0a0a0a;
+  --header-bg-gradient: linear-gradient(to right, #0a0a0a, #171717);
+  --header-border: rgba(255, 255, 255, 0.1);
+  --text-header-main: #ffffff;
+  --text-header-muted: #a3a3a3;
+  --input-bg-dark: rgba(255, 255, 255, 0.05);
+  --input-border-dark: rgba(255, 255, 255, 0.15);
 }
 
 body {
@@ -33,17 +42,74 @@ body {
   box-sizing: border-box;
 }
 
+/* --- NEW HEADER STYLES --- */
+.header-dark {
+  background: var(--header-bg-gradient);
+  border-bottom: 1px solid var(--header-border);
+  padding: 24px 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Slick shadow */
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.brand-name-dark {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-header-main);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.subtitle-dark {
+  font-size: 14px;
+  color: var(--text-header-muted);
+  margin: 0;
+}
+
+.date-label-dark {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-header-muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.input-wrapper-dark {
+  display: flex;
+  align-items: center;
+  background: var(--input-bg-dark);
+  border: 1px solid var(--input-border-dark);
+  border-radius: 8px;
+  padding: 4px 10px;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper-dark:hover, .input-wrapper-dark:focus-within {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15); /* Subtle blue glow */
+}
+
 /* --- FIX: Date Input Styling --- */
 .date-input-styled {
   padding: 8px 4px;
   border: none;
-  color: var(--text-main); /* Makes text dark and visible */
+  color: var(--text-header-main); /* Text is now white */
   background: transparent;
   outline: none;
   font-family: inherit;
   font-size: 14px;
   cursor: pointer;
-  color-scheme: light; /* Forces light mode controls (calendar icon) */
+  color-scheme: dark; /* Forces calendar popup to be dark mode */
 }
 
 /* --- ANIMATIONS --- */
