@@ -15,6 +15,7 @@ const regimeColor = (label: string) => {
   return "#ef4444"; // Danger Red
 };
 
+// DEFINING PROPS HERE FIXES THE ERROR
 export default function RegimeTimeline({ selectedDate }: { selectedDate?: string }) {
   const [data, setData] = useState<TimelinePoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +97,7 @@ const LegendItem = ({ color, label }: any) => (
   </div>
 );
 
+// We use 'as const' to fix CSS type errors
 const styles = {
   container: {
     background: '#fff',
@@ -113,5 +115,5 @@ const styles = {
   title: { fontSize: '18px', color: 'var(--primary)' },
   legend: { display: 'flex', gap: '20px' },
   chartWrapper: { fontSize: '12px' },
-  loading: { padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }
+  loading: { padding: '40px', textAlign: 'center' as const, color: 'var(--text-muted)' }
 };
