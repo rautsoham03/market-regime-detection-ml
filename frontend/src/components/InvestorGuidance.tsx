@@ -1,10 +1,11 @@
 import { useState } from "react";
 import html2pdf from "html2pdf.js";
+import { motion } from "framer-motion";
 import { API_BASE } from "../config";
 
-/* -------------------------------
-   Types
--------------------------------- */
+/* ----------------------------------
+   Types (MATCH BACKEND EXACTLY)
+----------------------------------- */
 
 type GuidanceResponse = {
   regime: string;
@@ -22,9 +23,9 @@ type GuidanceResponse = {
   risk_focus: string;
 };
 
-/* -------------------------------
+/* ----------------------------------
    Regime Theme Helper
--------------------------------- */
+----------------------------------- */
 
 const getRegimeTheme = (regime: string) => {
   if (regime.includes("Stable")) {
@@ -39,25 +40,40 @@ const getRegimeTheme = (regime: string) => {
   return { bg: "#f5f5f5", border: "#999", emoji: "ℹ️" };
 };
 
-/* -------------------------------
+/* ----------------------------------
    Component
--------------------------------- */
+----------------------------------- */
 
 export default function InvestorGuidance() {
   const [date, setDate] = useState("");
   const [data, setData] = useState<GuidanceResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchGuidance = async (selectedDate: string) => {
     if (!selectedDate) return;
 
-    setLoading(true);
-    const response = await fetch(
-  `${API_BASE}/investor-guidance?date=${selectedDate}`
-);
-    const result = await response.json();
-    setData(result);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch(
+        `${API_BASE}/investor-guidance?date=${selectedDate}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch investor guidance");
+      }
+
+      const json: GuidanceResponse = await res.json();
+      setData(json);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load investor guidance");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const exportPDF = () => {
@@ -75,9 +91,13 @@ export default function InvestorGuidance() {
       .save();
   };
 
+  /* ----------------------------------
+     Render
+  ----------------------------------- */
+
   return (
     <div style={pageStyle}>
-      <h2>📊 Regime-Aware Investor Guidance</h2>
+      <h2>📊 Investor Intelligence Dashboard</h2>
 
       {/* Date Picker */}
       <label>
@@ -93,7 +113,15 @@ export default function InvestorGuidance() {
         />
       </label>
 
-      {loading && <p style={{ marginTop: "15px" }}>Analyzing market regime…</p>}
+      {loading && (
+        <p style={{ marginTop: 15 }}>Analyzing market regime…</p>
+      )}
+
+      {error && (
+        <p style={{ marginTop: 15, color: "red" }}>
+          🚨 {error}
+        </p>
+      )}
 
       {data && (() => {
         const theme = getRegimeTheme(data.regime);
@@ -101,22 +129,23 @@ export default function InvestorGuidance() {
         return (
           <>
             {/* Export Button */}
-            <button
-              onClick={exportPDF}
-              style={exportBtnStyle}
-            >
-              📄 Export as PDF
+            <button onClick={exportPDF} style={exportBtnStyle}>
+              📄 Export Investor Report (PDF)
             </button>
 
             {/* Guidance Card */}
-            <div
+            <motion.div
               id="guidance-card"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
               style={{
                 background: theme.bg,
                 border: `2px solid ${theme.border}`,
                 borderRadius: "12px",
                 padding: "22px",
-                marginTop: "15px",
+                marginTop: "20px",
+                color: "#111",
               }}
             >
               <h3>
@@ -124,28 +153,26 @@ export default function InvestorGuidance() {
               </h3>
 
               <p>
-                <strong>Regime Active Since:</strong> {data.start_date}
+                <strong>Active Since:</strong> {data.start_date}
                 <br />
                 <strong>Duration:</strong> {data.duration_days} trading days
               </p>
 
-              <p>
-                <strong>Average Return:</strong>{" "}
-                {(data.metrics.average_return * 100).toFixed(2)}%
-                <br />
-                <strong>Volatility:</strong>{" "}
-                {(data.metrics.volatility * 100).toFixed(2)}%
-                <br />
-                <strong>Max Drawdown:</strong>{" "}
-                {(data.metrics.max_drawdown * 100).toFixed(2)}%
-              </p>
-
-              <h4>📌 Market State Summary</h4>
-              <p>
-                The market is currently in a <strong>{data.regime}</strong> phase.
-                The persistence of this regime indicates that conditions are
-                structural rather than temporary.
-              </p>
+              <h4>📈 Market Metrics</h4>
+              <ul>
+                <li>
+                  Average Return:{" "}
+                  {(data.metrics.average_return * 100).toFixed(2)}%
+                </li>
+                <li>
+                  Volatility:{" "}
+                  {(data.metrics.volatility * 100).toFixed(2)}%
+                </li>
+                <li>
+                  Max Drawdown:{" "}
+                  {(data.metrics.max_drawdown * 100).toFixed(2)}%
+                </li>
+              </ul>
 
               <h4>🎯 Investor Objective</h4>
               <p>{data.objective}</p>
@@ -169,7 +196,7 @@ export default function InvestorGuidance() {
 
               <h4>🛡 Risk Focus</h4>
               <p>{data.risk_focus}</p>
-            </div>
+            </motion.div>
           </>
         );
       })()}
@@ -177,20 +204,21 @@ export default function InvestorGuidance() {
   );
 }
 
-/* -------------------------------
+/* ----------------------------------
    Styles
--------------------------------- */
+----------------------------------- */
 
 const pageStyle: React.CSSProperties = {
   padding: "30px",
-  maxWidth: "850px",
+  maxWidth: "900px",
   margin: "0 auto",
   background: "#ffffff",
+  color: "#111",
 };
 
 const exportBtnStyle: React.CSSProperties = {
   marginTop: "20px",
-  padding: "8px 14px",
+  padding: "10px 16px",
   borderRadius: "6px",
   border: "none",
   cursor: "pointer",
