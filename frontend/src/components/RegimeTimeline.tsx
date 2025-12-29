@@ -3,6 +3,7 @@ import {
   LineChart,
   Line,
   XAxis,
+  YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -57,33 +58,51 @@ export default function RegimeTimeline() {
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <div style={{ marginTop: "30px" }}>
-      <h3>📈 Market Regime Timeline</h3>
+    <div
+      style={{
+        marginTop: 30,
+        padding: 20,
+        background: "#ffffff",
+        borderRadius: 12,
+      }}
+    >
+      <h3 style={{ marginBottom: 10 }}>📈 Market Regime Timeline</h3>
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <XAxis dataKey="date" hide />
-          <Tooltip />
+          <YAxis domain={[0, 2]} hide />
+
+          <Tooltip
+            formatter={(value: number) =>
+              value === 0
+                ? "Stable"
+                : value === 1
+                ? "Uncertain"
+                : "Crisis"
+            }
+          />
 
           <Line
             type="stepAfter"
             dataKey="regime"
-            stroke="#aaa"
-            strokeWidth={2}
+            stroke="#333"
+            strokeWidth={3}
             dot={({ cx, cy, payload }) => (
               <circle
                 cx={cx}
                 cy={cy}
-                r={4}
+                r={5}
                 fill={regimeColor(payload.regime)}
-                stroke="none"
+                stroke="#000"
+                strokeWidth={0.5}
               />
             )}
           />
         </LineChart>
       </ResponsiveContainer>
 
-      <div style={{ fontSize: "13px", marginTop: "6px" }}>
+      <div style={{ fontSize: 13, marginTop: 10 }}>
         <span style={{ color: "#2e7d32" }}>🟢 Stable</span> |{" "}
         <span style={{ color: "#f9a825" }}>🟡 Uncertain</span> |{" "}
         <span style={{ color: "#c62828" }}>🔴 Crisis</span>
