@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "framer-motion": "^10.16.4",
     "html2pdf.js": "^0.10.1",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
@@ -22,7 +21,6 @@
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5",
-    "@types/html2pdf.js": "^0.9.0"
+    "vite": "^4.4.5"
   }
 }
