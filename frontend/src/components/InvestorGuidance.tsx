@@ -163,7 +163,7 @@ export default function InvestorGuidance() {
 
 const pageStyle: React.CSSProperties = {
   padding: "30px",
-  maxWidth: "900px",
+  maxWidth: "100%",
   margin: "0 auto",
   background: "#fafafa",
   color: "#111",
