@@ -1,56 +1,69 @@
 import { useState, useEffect } from 'react';
 import InvestorGuidance from "./components/InvestorGuidance";
 import RegimeTimeline from "./components/RegimeTimeline";
+import TacticalAllocation from "./components/TacticalAllocation";
+import StrategyGuide from "./components/StrategyGuide"; // Import the new component
 import LoadingOverlay from "./components/LoadingOverlay";
 import './App.css'; 
-import { Layout, Calendar } from 'lucide-react';
+import { Layout, Calendar, PieChart, BookOpen } from 'lucide-react';
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<string>("2024-11-21");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeDate, setActiveDate] = useState<string>("2024-11-21");
+  
+  // Updated state to include 'strategy'
+  const [currentView, setCurrentView] = useState<"dashboard" | "allocation" | "strategy">("dashboard");
 
-  // Handle date change with cinematic loading effect
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
     setIsLoading(true);
-
-    // INCREASED DURATION: 4000ms = 4 seconds
-    // This gives the user enough time to read the investor quote
     setTimeout(() => {
       setActiveDate(newDate);
-      // Small buffer to ensure data is ready before fading out
       setTimeout(() => setIsLoading(false), 500); 
     }, 4000); 
   };
 
-  // Initial load effect
-  useEffect(() => {
-    handleDateChange(selectedDate);
-  }, []);
+  useEffect(() => { handleDateChange(selectedDate); }, []);
 
   return (
-    <div style={{ width: '100%', position: 'relative' }}>
+    <div style={{ width: '100%', position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Cinematic Loading Overlay */}
       {isLoading && <LoadingOverlay />}
 
-      {/* HEADER - Dark Theme */}
       <header className="header-dark">
         <div className="container header-content">
           <div>
             <div style={styles.logoRow}>
-              {/* Icon color changed to bright blue for contrast */}
               <Layout size={24} color="#3b82f6" />
               <h1 className="brand-name-dark">Market Regime Analytics</h1>
             </div>
-            <p className="subtitle-dark">Regime-aware market insights for long-term investors</p>
+            
+            <nav className="nav-bar">
+              <button 
+                className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setCurrentView('dashboard')}
+              >
+                <Layout size={16} /> Dashboard
+              </button>
+              <button 
+                className={`nav-item ${currentView === 'allocation' ? 'active' : ''}`}
+                onClick={() => setCurrentView('allocation')}
+              >
+                <PieChart size={16} /> Allocation Playbook
+              </button>
+              <button 
+                className={`nav-item ${currentView === 'strategy' ? 'active' : ''}`}
+                onClick={() => setCurrentView('strategy')}
+              >
+                <BookOpen size={16} /> Strategy Guide
+              </button>
+            </nav>
           </div>
 
           <div style={styles.dateControl}>
             <label className="date-label-dark">ANALYSIS DATE</label>
             <div className="input-wrapper-dark">
-              {/* Icon color changed to light gray */}
               <Calendar size={16} color="#a3a3a3" style={{marginRight: 8}}/>
               <input 
                 type="date" 
@@ -64,14 +77,33 @@ export default function App() {
       </header>
 
       <main className="container" style={styles.main}>
-        {/* Only show content when not loading to prevent flickering */}
-        <div className={!isLoading ? "animate-fade-in delay-1" : ""}>
-          <InvestorGuidance date={activeDate} />
-        </div>
         
-        <div className={!isLoading ? "animate-fade-in delay-2" : ""}>
-          <RegimeTimeline selectedDate={activeDate} />
-        </div>
+        {/* VIEW 1: DASHBOARD */}
+        {currentView === 'dashboard' && (
+          <>
+            <div className={!isLoading ? "animate-fade-in delay-1" : ""}>
+              <InvestorGuidance date={activeDate} />
+            </div>
+            <div className={!isLoading ? "animate-fade-in delay-2" : ""}>
+              <RegimeTimeline selectedDate={activeDate} />
+            </div>
+          </>
+        )}
+
+        {/* VIEW 2: ALLOCATION */}
+        {currentView === 'allocation' && (
+          <div className={!isLoading ? "animate-fade-in delay-1" : ""}>
+            <TacticalAllocation date={activeDate} />
+          </div>
+        )}
+
+        {/* VIEW 3: STRATEGY GUIDE */}
+        {currentView === 'strategy' && (
+          <div className={!isLoading ? "animate-fade-in delay-1" : ""}>
+            <StrategyGuide />
+          </div>
+        )}
+
       </main>
 
       <footer style={styles.footer}>
@@ -82,9 +114,8 @@ export default function App() {
 }
 
 const styles = {
-  // Header styles moved to CSS classes for the dark theme
-  logoRow: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' },
+  logoRow: { display: 'flex', alignItems: 'center', gap: '12px' },
   dateControl: { display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end' },
-  main: { margin: '40px auto', display: 'flex', flexDirection: 'column' as const, gap: '32px', paddingBottom: '60px' },
-  footer: { textAlign: 'center' as const, padding: '40px 0', color: '#94a3b8', fontSize: '13px', borderTop: '1px solid #e2e8f0', width: '100%', backgroundColor: '#fff' },
+  main: { margin: '40px auto', display: 'flex', flexDirection: 'column' as const, gap: '32px', paddingBottom: '60px', width: '100%', flex: 1 },
+  footer: { textAlign: 'center' as const, padding: '40px 0', color: '#94a3b8', fontSize: '13px', borderTop: '1px solid #e2e8f0', width: '100%', backgroundColor: '#fff', marginTop: 'auto' },
 };
