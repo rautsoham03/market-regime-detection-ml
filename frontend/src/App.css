@@ -130,3 +130,48 @@ body {
 
 .delay-1 { animation-delay: 0.1s; }
 .delay-2 { animation-delay: 0.2s; }
+
+
+/* --- NEW NAVIGATION BAR STYLES --- */
+.nav-bar {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.nav-item {
+  background: transparent;
+  border: none;
+  color: var(--text-header-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  position: relative;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.nav-item:hover {
+  color: white;
+}
+
+/* Active State (Underline effect) */
+.nav-item.active {
+  color: white;
+  font-weight: 600;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #3b82f6; /* Blue underline */
+  box-shadow: 0 0 10px #3b82f6; /* Blue glow */
+}
