@@ -6,117 +6,80 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import { API_BASE } from "../config";
 
 /* -------------------------------
    Types
 -------------------------------- */
-
 type RegimePoint = {
   date: string;
-  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
+  regime: number;
 };
 
 /* -------------------------------
    Helpers
 -------------------------------- */
+const label = (r: number) =>
+  r === 0 ? "Stable" : r === 1 ? "Uncertain" : "Crisis";
 
-const regimeLabel = (value: unknown): string => {
-  const v = Number(value);
-  if (v === 0) return "Stable";
-  if (v === 1) return "Uncertain";
-  if (v === 2) return "Crisis";
-  return "";
-};
-
-const regimeColor = (r: number) => {
-  if (r === 0) return "#2e7d32";
-  if (r === 1) return "#f9a825";
-  return "#c62828";
-};
+const color = (r: number) =>
+  r === 0 ? "#2ecc71" : r === 1 ? "#f1c40f" : "#e74c3c";
 
 /* -------------------------------
    Component
 -------------------------------- */
-
 export default function RegimeTimeline() {
   const [data, setData] = useState<RegimePoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/regime-timeline`)
-      .then((res) => {
-        if (!res.ok) throw new Error("API error");
-        return res.json();
-      })
-      .then((rows: RegimePoint[]) => {
-        setData(rows);
-        setError(null);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Unable to load regime timeline");
-      })
+      .then((r) => r.json())
+      .then(setData)
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p style={{ marginTop: 30 }}>Loading regime timeline…</p>;
-  if (error) return <p style={{ marginTop: 30, color: "red" }}>{error}</p>;
+  if (loading) return <p>Loading market regime timeline…</p>;
 
   return (
-    <div
-      style={{
-        marginTop: 40,
-        padding: 24,
-        background: "#ffffff",
-        borderRadius: 14,
-        width: "100%",
-      }}
-    >
-      <h3 style={{ marginBottom: 16 }}>📈 Market Regime Timeline</h3>
+    <section style={card}>
+      <h3>📈 Market Regime Timeline</h3>
 
-      <div style={{ width: "100%", height: 320 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height: 300 }}>
+        <ResponsiveContainer>
           <LineChart data={data}>
-            <XAxis dataKey="date" hide />
-
-            <YAxis
-              domain={[0, 2]}
-              ticks={[0, 1, 2]}
-              tickFormatter={(value) => regimeLabel(value)}
-            />
-
-            <Tooltip
-              formatter={(value) => regimeLabel(value)}
-              labelFormatter={(label) => `Date: ${label}`}
-            />
-
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+            <YAxis ticks={[0, 1, 2]} tickFormatter={label} />
+            <Tooltip formatter={(v: number) => label(v)} />
             <Line
               type="stepAfter"
               dataKey="regime"
-              stroke="#333"
-              strokeWidth={3}
+              stroke="#34495e"
+              strokeWidth={2}
               dot={({ cx, cy, payload }) => (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={6}
-                  fill={regimeColor(payload.regime)}
-                  stroke="none"
-                />
+                <circle cx={cx} cy={cy} r={4} fill={color(payload.regime)} />
               )}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      <div style={{ fontSize: 14, marginTop: 14 }}>
-        <span style={{ color: "#2e7d32", marginRight: 12 }}>🟢 Stable</span>
-        <span style={{ color: "#f9a825", marginRight: 12 }}>🟡 Uncertain</span>
-        <span style={{ color: "#c62828" }}>🔴 Crisis</span>
+      <div style={{ marginTop: 10 }}>
+        <span style={{ color: "#2ecc71" }}>● Stable</span>{" "}
+        <span style={{ color: "#f1c40f" }}>● Uncertain</span>{" "}
+        <span style={{ color: "#e74c3c" }}>● Crisis</span>
       </div>
-    </div>
+    </section>
   );
 }
+
+const card: React.CSSProperties = {
+  marginTop: "40px",
+  background: "#fff",
+  padding: "30px",
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+};
