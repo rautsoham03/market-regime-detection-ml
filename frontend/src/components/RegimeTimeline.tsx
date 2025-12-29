@@ -3,6 +3,7 @@ import {
   LineChart,
   Line,
   XAxis,
+  YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -14,22 +15,22 @@ import { API_BASE } from "../config";
 
 type RegimePoint = {
   date: string;
-  regime: number; // 0 Stable | 1 Uncertain | 2 Crisis
+  regime: number; // 0 = Stable, 1 = Uncertain, 2 = Crisis
 };
 
 /* -------------------------------
    Helpers
 -------------------------------- */
 
-const regimeColor = (r: number) => {
-  if (r === 0) return "#2e7d32";
-  if (r === 1) return "#f9a825";
+const regimeColor = (value: number) => {
+  if (value === 0) return "#2e7d32";
+  if (value === 1) return "#f9a825";
   return "#c62828";
 };
 
-const regimeLabel = (r: number) => {
-  if (r === 0) return "Stable";
-  if (r === 1) return "Uncertain";
+const regimeLabel = (value: number) => {
+  if (value === 0) return "Stable";
+  if (value === 1) return "Uncertain";
   return "Crisis";
 };
 
@@ -45,10 +46,13 @@ export default function RegimeTimeline() {
   useEffect(() => {
     fetch(`${API_BASE}/regime-timeline`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch timeline");
+        if (!res.ok) throw new Error("Failed to load timeline");
         return res.json();
       })
       .then((rows: RegimePoint[]) => {
+        if (!rows || rows.length === 0) {
+          throw new Error("No timeline data");
+        }
         setData(rows);
         setError(null);
       })
@@ -63,52 +67,74 @@ export default function RegimeTimeline() {
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        padding: "24px",
-        borderRadius: "12px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-      }}
-    >
-      <h3 style={{ marginBottom: "12px" }}>📈 Market Regime Timeline</h3>
+    <section style={sectionStyle}>
+      <h2 style={titleStyle}>📈 Market Regime Timeline</h2>
 
-      <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={data}>
-          <XAxis dataKey="date" hide />
-          <Tooltip
-            labelFormatter={(label) => `Date: ${label}`}
-            formatter={(value) => regimeLabel(Number(value))}
-            contentStyle={{
-              background: "#fff",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-            }}
-          />
+      {/* IMPORTANT: fixed height wrapper */}
+      <div style={{ width: "100%", height: 320 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+            <YAxis
+              type="number"
+              domain={[0, 2]}
+              ticks={[0, 1, 2]}
+              tickFormatter={regimeLabel}
+            />
+            <Tooltip
+              formatter={(v: number) => regimeLabel(v)}
+              labelStyle={{ fontSize: 12 }}
+            />
 
-          <Line
-            type="stepAfter"
-            dataKey="regime"
-            stroke="#555"
-            strokeWidth={2}
-            dot={({ cx, cy, payload }) => (
-              <circle
-                cx={cx}
-                cy={cy}
-                r={4}
-                fill={regimeColor(payload.regime)}
-                stroke="none"
-              />
-            )}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-
-      <div style={{ fontSize: "13px", marginTop: "10px" }}>
-        <span style={{ color: "#2e7d32" }}>🟢 Stable</span> |{" "}
-        <span style={{ color: "#f9a825" }}>🟡 Uncertain</span> |{" "}
-        <span style={{ color: "#c62828" }}>🔴 Crisis</span>
+            <Line
+              type="stepAfter"
+              dataKey="regime"
+              stroke="#333"
+              strokeWidth={2}
+              dot={(props) =>
+                props.cx && props.cy ? (
+                  <circle
+                    cx={props.cx}
+                    cy={props.cy}
+                    r={4}
+                    fill={regimeColor(props.payload.regime)}
+                  />
+                ) : null
+              }
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
-    </div>
+
+      {/* Legend */}
+      <div style={legendStyle}>
+        <span style={{ color: "#2e7d32" }}>● Stable</span>
+        <span style={{ color: "#f9a825" }}>● Uncertain</span>
+        <span style={{ color: "#c62828" }}>● Crisis</span>
+      </div>
+    </section>
   );
 }
+
+/* -------------------------------
+   Styles
+-------------------------------- */
+
+const sectionStyle: React.CSSProperties = {
+  marginTop: "60px",
+  padding: "40px",
+  background: "#ffffff",
+  borderRadius: "14px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+};
+
+const titleStyle: React.CSSProperties = {
+  marginBottom: "20px",
+};
+
+const legendStyle: React.CSSProperties = {
+  display: "flex",
+  gap: "20px",
+  marginTop: "12px",
+  fontSize: "14px",
+};
