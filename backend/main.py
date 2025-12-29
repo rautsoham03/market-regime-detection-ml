@@ -26,41 +26,30 @@ app.add_middleware(
 # ----------------------------------
 
 def find_working_data_dir(anchor_filename):
-    """
-    Finds the directory containing the 'anchor' file.
-    """
     base_dir = Path(__file__).resolve().parent
-    
     candidate_dirs = [
         base_dir / "data",              
         base_dir.parent / "data",       
         Path("data"),                   
         base_dir                        
     ]
-
     for d in candidate_dirs:
-        candidate_path = d / anchor_filename
-        if candidate_path.exists():
+        if (d / anchor_filename).exists():
             print(f"✅ Data Directory Located: {d}")
             return d
-            
-    print(f"❌ Critical: Could not find anchor file '{anchor_filename}' anywhere.")
     return None
 
 # ----------------------------------
 # Load Data
 # ----------------------------------
 
-# 1. Locate the folder
 data_dir = find_working_data_dir("nifty50_final_with_labels.csv")
-
 main_csv_path = None
 quotes_csv_path = None
 
 if data_dir:
     main_csv_path = data_dir / "nifty50_final_with_labels.csv"
     quotes_csv_path = data_dir / "Investors.csv"
-
     # Case-insensitive check for Investors.csv
     if not quotes_csv_path.exists():
         for f in os.listdir(data_dir):
@@ -68,7 +57,6 @@ if data_dir:
                 quotes_csv_path = data_dir / f
                 break
 
-# 2. Load Main Data
 if main_csv_path and main_csv_path.exists():
     df = pd.read_csv(main_csv_path, index_col=0, parse_dates=True)
     
@@ -89,40 +77,45 @@ else:
     print("CRITICAL ERROR: Main Data CSV could not be loaded.")
     df = pd.DataFrame()
 
-# 3. Load Quotes Data (WITH ENCODING FIX)
+# Load Quotes
 quotes_data = []
 if quotes_csv_path and quotes_csv_path.exists():
     try:
-        # First try standard UTF-8
         quotes_df = pd.read_csv(quotes_csv_path, encoding='utf-8')
     except UnicodeDecodeError:
-        # Fallback to Windows encoding if UTF-8 fails (Fixes byte 0x93 error)
-        print("⚠️ UTF-8 failed, trying Windows encoding...")
-        quotes_df = pd.read_csv(quotes_csv_path, encoding='cp1252')
-        
-    try:
+        try:
+            quotes_df = pd.read_csv(quotes_csv_path, encoding='cp1252')
+        except:
+            quotes_df = pd.DataFrame()
+            
+    if not quotes_df.empty:
         quotes_data = quotes_df.to_dict(orient="records")
-        print(f"✅ Loaded {len(quotes_data)} quotes.")
-    except Exception as e:
-        print(f"❌ Error parsing quotes: {e}")
 
 if not quotes_data:
     quotes_data = [{"name": "Market Wisdom", "quote": "Patience is key.", "url": ""}]
 
 
 # ----------------------------------
-# Helpers
+# Helpers: Risk Logic
 # ----------------------------------
 
 def calculate_risk_metrics(row, lookback_window=5):
+    # 1. Early Warning Probability (Smoothed Logic)
     vol_20 = row.get('vol_20', 0.01)
     vol_60 = row.get('vol_60', 0.01)
     
+    # Calculate Ratio: Is short-term vol higher than long-term vol?
     vol_ratio = vol_20 / vol_60 if vol_60 > 0 else 1.0
     
-    prob_score = np.interp(vol_ratio, [0.8, 1.0, 1.5], [10, 40, 90])
+    # TUNED SENSITIVITY:
+    # Previously: [0.8, 1.0, 1.5] -> Too sensitive. 1.0 ratio was 40% risk.
+    # New Logic:  [1.0, 1.3, 2.0] -> 1.0 ratio is 10% risk (Normal).
+    #                                1.3 ratio is 50% risk (Warning).
+    #                                2.0 ratio is 90% risk (Critical).
+    prob_score = np.interp(vol_ratio, [1.0, 1.3, 2.0], [10, 50, 90])
     early_warning_prob = int(np.clip(prob_score, 0, 99))
 
+    # 2. Recent Regime Change Alert
     current_date_idx = df.index.get_loc(row.name)
     start_idx = max(0, current_date_idx - lookback_window)
     recent_slice = df.iloc[start_idx:current_date_idx+1]
@@ -144,8 +137,6 @@ def home():
 
 @app.get("/random-quote")
 def get_random_quote():
-    if not quotes_data:
-        return {"name": "N/A", "quote": "Loading...", "url": ""}
     return random.choice(quotes_data)
 
 @app.get("/investor-guidance")
@@ -153,8 +144,7 @@ def investor_guidance(
     date: str,
     persona: str = Query("Balanced", enum=["Conservative", "Balanced", "Aggressive"])
 ):
-    if df.empty:
-        return {"error": "Data not loaded"}
+    if df.empty: return {"error": "Data not loaded"}
 
     date_obj = pd.to_datetime(date)
     if date_obj not in df.index:
@@ -171,9 +161,13 @@ def investor_guidance(
         "max_drawdown": float(df["drawdown"].min()),
     }
 
+    # FIX: Use 'mean_return_20' instead of single-day 'log_return'
+    # This ensures the annualized number on frontend is a Trend, not a Daily spike.
+    safe_avg_return = float(row.get("mean_return_20", row["log_return"]))
+
     response = regime_investor_guidance_json(
         regime_label=row["regime_label"],
-        avg_return=float(row["log_return"]),
+        avg_return=safe_avg_return, # PASSING THE ROLLING MEAN
         volatility=float(row["vol_20"]),
         max_drawdown=float(row["drawdown"]),
         regime_start_date=str(row["regime_start_date"]),
@@ -195,7 +189,6 @@ def regime_timeline():
     if "Price" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"Price": "date"})
     elif "index" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"index": "date"})
     
-    # Check if necessary columns exist
     if "date" not in timeline_df.columns or "close" not in timeline_df.columns:
         return []
 
