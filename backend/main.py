@@ -51,21 +51,30 @@ df.sort_index(inplace=True)
 # 2. Load Quotes Data
 try:
     quotes_df = pd.read_csv(QUOTES_PATH)
+    # Convert to list of dicts for easy random selection
     quotes_data = quotes_df.to_dict(orient="records")
 except Exception as e:
     print(f"Warning: Could not load quotes: {e}")
-    quotes_data = [{"Investor": "Market Wisdom", "Quote": "Patience is key.", "Image_URL": ""}]
+    # Fallback if file is missing
+    quotes_data = [{"name": "Market Wisdom", "quote": "Patience is key.", "url": ""}]
 
 
 # ----------------------------------
 # Helper: Calculate Early Warning
 # ----------------------------------
 def calculate_risk_metrics(row, lookback_window=5):
-    # 1. Early Warning Probability (Simple Heuristic based on Volatility Trend)
+    """
+    Calculates extra risk metrics not present in the base advisor.
+    """
+    # 1. Early Warning Probability (Heuristic based on Volatility Trend)
     # If short-term vol (vol_20) is rising faster than long-term vol (vol_60)
-    vol_ratio = row.get('vol_20', 0.01) / row.get('vol_60', 0.01) if row.get('vol_60', 0) > 0 else 1.0
+    vol_20 = row.get('vol_20', 0.01)
+    vol_60 = row.get('vol_60', 0.01)
+    
+    vol_ratio = vol_20 / vol_60 if vol_60 > 0 else 1.0
     
     # Map ratio to a 0-100% probability scale. Ratio > 1.2 is high risk.
+    # Logic: Stable(0-30%), Warning(30-70%), Critical(>70%)
     prob_score = np.interp(vol_ratio, [0.8, 1.0, 1.5], [10, 40, 90])
     early_warning_prob = int(np.clip(prob_score, 0, 99))
 
@@ -74,10 +83,13 @@ def calculate_risk_metrics(row, lookback_window=5):
     current_date_idx = df.index.get_loc(row.name)
     start_idx = max(0, current_date_idx - lookback_window)
     recent_slice = df.iloc[start_idx:current_date_idx+1]
-    # Check if 'regime_change' column has any True values recently
-    has_recent_change = recent_slice['regime_change'].any() if 'regime_change' in recent_slice.columns else False
+    
+    # Check if 'regime_change' column is True anywhere in the slice
+    has_recent_change = False
+    if 'regime_change' in recent_slice.columns:
+        has_recent_change = bool(recent_slice['regime_change'].any())
 
-    return early_warning_prob, bool(has_recent_change)
+    return early_warning_prob, has_recent_change
 
 
 # ----------------------------------
@@ -88,11 +100,11 @@ def calculate_risk_metrics(row, lookback_window=5):
 def home():
     return {"status": "Backend running successfully"}
 
-# NEW ENDPOINT: Get Random Quote
+# NEW ENDPOINT: Get Random Quote for Loading Screen
 @app.get("/random-quote")
 def get_random_quote():
     if not quotes_data:
-        return {"Investor": "N/A", "Quote": "Loading...", "Image_URL": ""}
+        return {"name": "N/A", "quote": "Loading...", "url": ""}
     return random.choice(quotes_data)
 
 @app.get("/investor-guidance")
@@ -101,11 +113,12 @@ def investor_guidance(
     persona: str = Query("Balanced", enum=["Conservative", "Balanced", "Aggressive"])
 ):
     date_obj = pd.to_datetime(date)
+    # Handle non-trading days (nearest)
     if date_obj not in df.index:
         date_obj = df.index[df.index.get_loc(date_obj, method="nearest")]
 
     row = df.loc[date_obj]
-    row.name = date_obj # Ensure name is set for helper function
+    row.name = date_obj 
 
     # Calculate new metrics
     ew_prob, recent_change = calculate_risk_metrics(row)
@@ -116,7 +129,7 @@ def investor_guidance(
         "max_drawdown": float(df["drawdown"].min()),
     }
 
-    # Get base guidance
+    # Get base guidance from your rag_advisor module
     response = regime_investor_guidance_json(
         regime_label=row["regime_label"],
         avg_return=float(row["log_return"]),
@@ -137,7 +150,7 @@ def investor_guidance(
 @app.get("/regime-timeline")
 def regime_timeline():
     timeline_df = df.reset_index()
-    # Ensure date column is named correctly
+    # Normalize date column name
     if "Price" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"Price": "date"})
     elif "index" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"index": "date"})
     
