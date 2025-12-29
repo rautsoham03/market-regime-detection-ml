@@ -22,15 +22,16 @@ type RegimePoint = {
    Helpers
 -------------------------------- */
 
-const regimeColor = (value: number) => {
-  if (value === 0) return "#2e7d32";
-  if (value === 1) return "#f9a825";
+const regimeColor = (v: number) => {
+  if (v === 0) return "#2e7d32";
+  if (v === 1) return "#f9a825";
   return "#c62828";
 };
 
-const regimeLabel = (value: number) => {
-  if (value === 0) return "Stable";
-  if (value === 1) return "Uncertain";
+const regimeLabelSafe = (v: unknown): string => {
+  if (typeof v !== "number") return "";
+  if (v === 0) return "Stable";
+  if (v === 1) return "Uncertain";
   return "Crisis";
 };
 
@@ -46,20 +47,14 @@ export default function RegimeTimeline() {
   useEffect(() => {
     fetch(`${API_BASE}/regime-timeline`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to load timeline");
+        if (!res.ok) throw new Error("API error");
         return res.json();
       })
       .then((rows: RegimePoint[]) => {
-        if (!rows || rows.length === 0) {
-          throw new Error("No timeline data");
-        }
         setData(rows);
         setError(null);
       })
-      .catch((err) => {
-        console.error(err);
-        setError("Unable to load regime timeline");
-      })
+      .catch(() => setError("Unable to load regime timeline"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -68,22 +63,21 @@ export default function RegimeTimeline() {
 
   return (
     <section style={sectionStyle}>
-      <h2 style={titleStyle}>📈 Market Regime Timeline</h2>
+      <h2>📈 Market Regime Timeline</h2>
 
-      {/* IMPORTANT: fixed height wrapper */}
+      {/* FIXED HEIGHT — REQUIRED */}
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
             <YAxis
-              type="number"
               domain={[0, 2]}
               ticks={[0, 1, 2]}
-              tickFormatter={regimeLabel}
+              tickFormatter={(v) => regimeLabelSafe(v)}
             />
+
             <Tooltip
-              formatter={(v: number) => regimeLabel(v)}
-              labelStyle={{ fontSize: 12 }}
+              formatter={(value) => regimeLabelSafe(value)}
             />
 
             <Line
@@ -106,7 +100,6 @@ export default function RegimeTimeline() {
         </ResponsiveContainer>
       </div>
 
-      {/* Legend */}
       <div style={legendStyle}>
         <span style={{ color: "#2e7d32" }}>● Stable</span>
         <span style={{ color: "#f9a825" }}>● Uncertain</span>
@@ -126,10 +119,6 @@ const sectionStyle: React.CSSProperties = {
   background: "#ffffff",
   borderRadius: "14px",
   boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-};
-
-const titleStyle: React.CSSProperties = {
-  marginBottom: "20px",
 };
 
 const legendStyle: React.CSSProperties = {
