@@ -15,11 +15,13 @@ export default function App() {
     setSelectedDate(newDate);
     setIsLoading(true);
 
-    // 1.5 second delay to let the user read the quote and feel the "processing"
+    // INCREASED DURATION: 4000ms = 4 seconds
+    // This gives the user enough time to read the investor quote
     setTimeout(() => {
       setActiveDate(newDate);
+      // Small buffer to ensure data is ready before fading out
       setTimeout(() => setIsLoading(false), 500); 
-    }, 1500);
+    }, 4000); 
   };
 
   // Initial load effect
@@ -33,25 +35,28 @@ export default function App() {
       {/* Cinematic Loading Overlay */}
       {isLoading && <LoadingOverlay />}
 
-      <header style={styles.header}>
-        <div className="container" style={styles.headerContent}>
+      {/* HEADER - Dark Theme */}
+      <header className="header-dark">
+        <div className="container header-content">
           <div>
             <div style={styles.logoRow}>
-              <Layout size={24} color="#2563eb" />
-              <h1 style={styles.brandName}>Market Regime Analytics</h1>
+              {/* Icon color changed to bright blue for contrast */}
+              <Layout size={24} color="#3b82f6" />
+              <h1 className="brand-name-dark">Market Regime Analytics</h1>
             </div>
-            <p style={styles.subtitle}>Regime-aware market insights for long-term investors</p>
+            <p className="subtitle-dark">Regime-aware market insights for long-term investors</p>
           </div>
 
           <div style={styles.dateControl}>
-            <label style={styles.label}>ANALYSIS DATE</label>
-            <div style={styles.inputWrapper}>
-              <Calendar size={16} color="#64748b" style={{marginRight: 8}}/>
+            <label className="date-label-dark">ANALYSIS DATE</label>
+            <div className="input-wrapper-dark">
+              {/* Icon color changed to light gray */}
+              <Calendar size={16} color="#a3a3a3" style={{marginRight: 8}}/>
               <input 
                 type="date" 
                 value={selectedDate} 
                 onChange={(e) => handleDateChange(e.target.value)} 
-                className="date-input-styled" // CSS class handles visibility
+                className="date-input-styled" 
               />
             </div>
           </div>
@@ -77,29 +82,9 @@ export default function App() {
 }
 
 const styles = {
-  header: {
-    backgroundColor: '#fff',
-    borderBottom: '1px solid #e2e8f0',
-    padding: '24px 0',
-    position: 'sticky' as const,
-    top: 0,
-    zIndex: 50,
-    width: '100%',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-  },
-  headerContent: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap' as const,
-    gap: '20px',
-  },
+  // Header styles moved to CSS classes for the dark theme
   logoRow: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' },
-  brandName: { fontSize: '22px', fontWeight: 700, color: '#0f172a', margin: 0 },
-  subtitle: { fontSize: '14px', color: '#64748b', margin: 0 },
   dateControl: { display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end' },
-  label: { fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px', letterSpacing: '0.5px' },
-  inputWrapper: { display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px' },
   main: { margin: '40px auto', display: 'flex', flexDirection: 'column' as const, gap: '32px', paddingBottom: '60px' },
   footer: { textAlign: 'center' as const, padding: '40px 0', color: '#94a3b8', fontSize: '13px', borderTop: '1px solid #e2e8f0', width: '100%', backgroundColor: '#fff' },
 };
