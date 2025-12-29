@@ -22,52 +22,70 @@ app.add_middleware(
 )
 
 # ----------------------------------
-# Robust Data Path Finder
+# Smart Path Finder (Piggyback Strategy)
 # ----------------------------------
 
-def find_data_file(filename):
+def find_working_data_dir(anchor_filename):
     """
-    Searches for the CSV file in common relative locations.
-    Works for Local (Git) and Cloud (Render).
+    Finds the directory containing the 'anchor' file (the one we know works).
+    Returns the Path to the directory.
     """
-    # 1. Get the directory where main.py is located
     base_dir = Path(__file__).resolve().parent
     
-    # 2. List of relative paths to check
-    possible_paths = [
-        base_dir / "data" / filename,              # Standard: /backend/data/file.csv
-        base_dir.parent / "data" / filename,       # Sibling: /root/data/file.csv
-        Path("data") / filename,                   # CWD relative: ./data/file.csv
+    # Places to look for the directory containing the anchor file
+    candidate_dirs = [
+        base_dir / "data",              # Standard: /backend/data/
+        base_dir.parent / "data",       # Sibling: /root/data/
+        Path("data"),                   # CWD: ./data/
+        base_dir                        # Same folder as main.py (fallback)
     ]
 
-    for path in possible_paths:
-        if path.exists():
-            print(f"✅ Found {filename} at: {path}")
-            return path
+    for d in candidate_dirs:
+        candidate_path = d / anchor_filename
+        if candidate_path.exists():
+            print(f"✅ Data Directory Located: {d}")
+            return d
             
-    print(f"❌ Warning: Could not find {filename}. Checked: {[str(p) for p in possible_paths]}")
+    print(f"❌ Critical: Could not find anchor file '{anchor_filename}' anywhere.")
     return None
 
 # ----------------------------------
 # Load Data
 # ----------------------------------
 
-# Find the files dynamically
-main_csv_path = find_data_file("nifty50_final_with_labels.csv")
-quotes_csv_path = find_data_file("Investors.csv")
+# 1. Locate the folder using the file we KNOW exists
+data_dir = find_working_data_dir("nifty50_final_with_labels.csv")
 
-# 1. Load Main Financial Data
-if main_csv_path:
+main_csv_path = None
+quotes_csv_path = None
+
+if data_dir:
+    # 2. Construct paths relative to that working folder
+    main_csv_path = data_dir / "nifty50_final_with_labels.csv"
+    quotes_csv_path = data_dir / "Investors.csv"
+
+    # DEBUG: Check if Investors.csv exists, otherwise print folder contents
+    if not quotes_csv_path.exists():
+        print(f"⚠️ 'Investors.csv' not found in {data_dir}")
+        print(f"📂 Folder contents: {os.listdir(data_dir)}") # THIS WILL SHOW YOU THE ACTUAL FILE NAMES
+        # Attempt case-insensitive fix (e.g. investors.csv)
+        for f in os.listdir(data_dir):
+            if f.lower() == "investors.csv":
+                quotes_csv_path = data_dir / f
+                print(f"✅ Found case-mismatch file: {quotes_csv_path}")
+                break
+
+# 3. Load Main Data
+if main_csv_path and main_csv_path.exists():
     df = pd.read_csv(main_csv_path, index_col=0, parse_dates=True)
     
-    # Ensure 'close' column exists for charts
+    # Ensure 'close' column exists
     if 'close' not in df.columns:
         if 'cum_return' in df.columns:
             df['close'] = df['cum_return'] * 8500
         else:
             df['close'] = 10000
 
-    # Map Labels for frontend colors
     label_map = {
         "Stable / Bull Market": "Stable",
         "Uncertain / Transition": "Uncertain",
@@ -76,19 +94,20 @@ if main_csv_path:
     df['regime_label'] = df['regime_label'].replace(label_map)
     df.sort_index(inplace=True)
 else:
-    print("CRITICAL ERROR: Main Data CSV not found. API will return errors.")
-    df = pd.DataFrame() 
+    print("CRITICAL ERROR: Main Data CSV could not be loaded.")
+    df = pd.DataFrame()
 
-# 2. Load Quotes Data
+# 4. Load Quotes Data
 quotes_data = []
-if quotes_csv_path:
+if quotes_csv_path and quotes_csv_path.exists():
     try:
         quotes_df = pd.read_csv(quotes_csv_path)
         quotes_data = quotes_df.to_dict(orient="records")
+        print(f"✅ Loaded {len(quotes_data)} quotes.")
     except Exception as e:
-        print(f"Warning: Error reading quotes file: {e}")
+        print(f"Error reading quotes: {e}")
 
-# Fallback quote if file load fails
+# Fallback
 if not quotes_data:
     quotes_data = [{"name": "Market Wisdom", "quote": "Patience is key.", "url": ""}]
 
@@ -97,20 +116,14 @@ if not quotes_data:
 # Helper: Calculate Early Warning
 # ----------------------------------
 def calculate_risk_metrics(row, lookback_window=5):
-    """
-    Calculates extra risk metrics based on volatility trends.
-    """
-    # 1. Early Warning Probability
     vol_20 = row.get('vol_20', 0.01)
     vol_60 = row.get('vol_60', 0.01)
     
     vol_ratio = vol_20 / vol_60 if vol_60 > 0 else 1.0
     
-    # Map ratio to a 0-100% probability scale.
     prob_score = np.interp(vol_ratio, [0.8, 1.0, 1.5], [10, 40, 90])
     early_warning_prob = int(np.clip(prob_score, 0, 99))
 
-    # 2. Recent Regime Change Alert
     current_date_idx = df.index.get_loc(row.name)
     start_idx = max(0, current_date_idx - lookback_window)
     recent_slice = df.iloc[start_idx:current_date_idx+1]
@@ -145,7 +158,6 @@ def investor_guidance(
         return {"error": "Data not loaded"}
 
     date_obj = pd.to_datetime(date)
-    # Handle non-trading days
     if date_obj not in df.index:
         date_obj = df.index[df.index.get_loc(date_obj, method="nearest")]
 
@@ -181,19 +193,10 @@ def regime_timeline():
     if df.empty: return []
 
     timeline_df = df.reset_index()
+    if "Price" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"Price": "date"})
+    elif "index" in timeline_df.columns: timeline_df = timeline_df.rename(columns={"index": "date"})
     
-    # Normalize date column name
-    if "Price" in timeline_df.columns: 
-        timeline_df = timeline_df.rename(columns={"Price": "date"})
-    elif "index" in timeline_df.columns: 
-        timeline_df = timeline_df.rename(columns={"index": "date"})
-    
-    # Ensure we have data to return
-    if "date" not in timeline_df.columns or "close" not in timeline_df.columns:
-        return []
-
     final_df = timeline_df[["date", "close", "regime_label"]].tail(300)
     final_df["date"] = final_df["date"].astype(str)
     final_df["close"] = final_df["close"].astype(float)
-    
     return final_df.to_dict(orient="records")
